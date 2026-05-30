@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>干部画像</title>
+<style>
+:root{--p:#c41e2c;--pl:#f5e6e8;--pb:#fdf2f3;--t:#333;--tl:#666;--tm:#999;--b:#e8e8e8;--bg:#f5f5f5;--c:#fff;--tb:#e8f4fd;--tbt:#1a73e8;--tg:#e8f8e8;--tgt:#1a8c1a;--to:#fff3e0;--tot:#e67e00;--tr:#fde8e8;--trt:#c41e2c;--tp:#f3e8fd;--tpt:#7c3aed;--s:0 2px 12px rgba(0,0,0,.08);--r:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--t);font-size:14px;line-height:1.6}
+.tb{position:fixed;top:0;left:0;right:0;height:48px;background:var(--p);display:flex;align-items:center;padding:0 24px;z-index:100;color:#fff}
+.tb-logo{font-size:18px;font-weight:700;margin-right:24px}
+.tb-title{font-size:14px;opacity:.9}
+.tb-search{margin-left:auto;display:flex;gap:8px;align-items:center}
+.tb-search input{width:300px;height:32px;border:none;border-radius:16px;padding:0 16px;font-size:13px;outline:none}
+.tb-date{font-size:12px;opacity:.7;margin-left:16px}
+.main{max-width:1200px;margin:64px auto 24px;padding:0 16px}
+.sec{background:var(--c);border-radius:var(--r);box-shadow:var(--s);margin-bottom:16px;padding:20px 24px}
+.sec-t{font-size:16px;font-weight:700;color:var(--p);padding-bottom:12px;border-bottom:2px solid var(--p);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.sec-t::before{content:"";display:inline-block;width:4px;height:18px;background:var(--p);border-radius:2px}
+.hero{background:linear-gradient(135deg,var(--p),#a01825);color:#fff;border-radius:var(--r);padding:32px 28px;margin-bottom:16px;display:flex;gap:24px}
+.hero-av{width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;flex-shrink:0}
+.hero-info{flex:1}
+.hero-role{font-size:28px;font-weight:700;display:flex;align-items:center;gap:12px}
+.hero-badge{font-size:12px;background:rgba(255,255,255,.25);padding:2px 10px;border-radius:12px}
+.hero-sub{opacity:.85;margin-top:4px;font-size:13px}
+.hero-tags{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.hero-tag{font-size:12px;background:rgba(255,255,255,.2);padding:3px 12px;border-radius:14px}
+.hero-stats{display:flex;gap:20px;margin-top:12px}
+.hero-stat{text-align:center}
+.hero-stat-v{font-size:24px;font-weight:700}
+.hero-stat-l{font-size:11px;opacity:.8}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.info-item{padding:12px 0;border-bottom:1px solid var(--b);display:flex}
+.info-l{color:var(--tm);width:90px;flex-shrink:0;font-size:13px}
+.info-v{font-weight:500;font-size:13px;flex:1}
+.info-v.empty{color:var(--tm);font-style:italic}
+.er{display:flex;gap:16px;margin-bottom:12px;align-items:flex-start}
+.er-l{width:100px;flex-shrink:0;font-weight:600;font-size:13px;padding-top:3px}
+.er-t{display:flex;gap:6px;flex-wrap:wrap}
+.tag{padding:3px 12px;border-radius:14px;font-size:12px}
+.tb{background:var(--tb);color:var(--tbt)}
+.tg{background:var(--tg);color:var(--tgt)}
+.to{background:var(--to);color:var(--tot)}
+.tr{background:var(--tr);color:var(--trt)}
+.tl{position:relative;padding-left:24px}
+.tl::before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:2px;background:var(--b)}
+.tl-item{position:relative;margin-bottom:16px;padding-left:20px}
+.tl-item::before{content:"";position:absolute;left:-18px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--p);border:2px solid var(--c);z-index:1}
+.tl-item.cur::before{background:#fff;border:3px solid var(--p)}
+.tl-p{font-size:12px;color:var(--tm);margin-bottom:2px}
+.tl-pos{font-size:13px;font-weight:600}
+.tl-u{font-size:12px;color:var(--tl)}
+.d2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.at{display:inline-flex;gap:4px;padding:4px 12px;margin:3px;border-radius:16px;font-size:12px;background:#f8f8f8;border:1px solid #eee}
+.at.hot{font-size:14px;font-weight:700;color:var(--p);background:var(--pb);border-color:#f0d0d2}
+.at.warm{font-size:13px;font-weight:500;background:#f0f5f0;border-color:#d0e8d0}
+.radar-w{display:flex;justify-content:center;padding:16px 0}
+.radar-c{width:260px;height:260px}
+.sc{display:flex;gap:8px;padding:10px 0;border-bottom:1px solid var(--b)}
+.sc:last-child{border-bottom:none}
+.sc-b{flex-shrink:0;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600}
+.sc-b.a{background:#fff3e0;color:#e67e00}
+.sc-b.e{background:#e8f4fd;color:#1a73e8}
+.sc-b.p{background:#f3e8fd;color:#7c3aed}
+.sc-t{font-size:13px;line-height:1.6}
+.ach{background:#fafafa;border:1px solid var(--b);border-radius:8px;padding:16px;margin-bottom:12px}
+.ach-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ach-t{font-weight:700;font-size:14px}
+.ach-l{padding:2px 10px;border-radius:12px;font-size:12px}
+.ach-l.g{background:#e8f8e8;color:#1a8c1a}
+.ach-l.m{background:#fff3e0;color:#e67e00}
+.ach-d{font-size:13px;color:var(--tl);line-height:1.7}
+.ach-s{font-size:12px;color:var(--tm);margin-top:6px}
+.sel-c{text-align:center;padding:16px 12px;border-radius:8px;border:1px solid var(--b)}
+.sel-c .i{font-size:28px;margin-bottom:6px}
+.sel-c .l{font-size:13px;font-weight:600}
+.sel-c .cnt{font-size:20px;font-weight:700;color:var(--p)}
+.al{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.al-item{padding:12px 16px;border-radius:8px;display:flex;align-items:center;gap:12px}
+.al-item.ok{background:#f6faf6;border:1px solid #d0e8d0}
+.al-item.warn{background:#fffbf0;border:1px solid #f0d8a0}
+.al-icon{font-size:20px}
+.al-l{font-size:12px;color:var(--tm)}
+.al-v{font-size:13px;font-weight:600}
+.rel-c{display:grid;grid-template-columns:1fr 260px;gap:20px}
+.rel-g{position:relative;height:320px;background:#fafafa;border-radius:8px;border:1px solid var(--b);overflow:hidden}
+.rel-s{max-height:320px;overflow-y:auto}
+.rel-list{list-style:none;padding:0}
+.rel-list li{padding:8px 0;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:8px;font-size:13px}
+.rel-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.rel-n{font-weight:600}
+.rel-t{font-size:11px;color:var(--tm);margin-left:auto}
+.dir{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.dir-c{padding:16px;border-radius:8px;border:1px solid var(--b)}
+.dir-c h4{font-size:14px;margin-bottom:8px;color:var(--p)}
+.dir-c ul{padding-left:16px}
+.dir-c li{font-size:13px;margin-bottom:4px;color:var(--tl)}
+.nc{width:100%;height:300px}
+.miss{background:#fffbf0;border:1px solid #f0d8a0;padding:12px 16px;border-radius:8px;margin-top:12px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="tb">
+  <div class="tb-logo">组工智能体</div>
+  <div class="tb-title">干部画像</div>
+  <div class="tb-search"><input type="text" id="searchInput" placeholder="输入编号搜索..." onkeydown="if(event.key==='Enter')loadCadre(this.value||'001')"></div>
+  <div class="tb-date" id="updateDate"></div>
+</div>
+<div class="main" id="app"></div>
+
+<script>
+document.getElementById("updateDate").textContent = "更新时间: "+new Date().toLocaleDateString("zh-CN");
+
+async function loadCadre(id) {
+  document.getElementById("searchInput").value = id;
+  const app = document.getElementById("app");
+  app.innerHTML = '<div class="sec" style="text-align:center;padding:60px;color:var(--tm)">加载中...</div>';
+  try {
+    const res = await fetch(`/api/cadre/${id}`);
+    if (!res.ok) { app.innerHTML = `<div class="sec" style="text-align:center;padding:60px;color:var(--tm)">干部 ${id} 未找到</div>`; return; }
+    render(await res.json());
+  } catch(e) {
+    app.innerHTML = `<div class="sec" style="text-align:center;padding:60px;color:var(--trt)">API 连接失败: ${e.message}<br><small>请确认服务器已启动</small></div>`;
+  }
+}
+
+function v(obj, key, fallback="—") {
+  const val = obj?.[key];
+  if (val === null || val === undefined || val === "" || val === "null") return fallback;
+  return String(val);
+}
+function has(obj, key) {
+  const val = obj?.[key];
+  return val !== null && val !== undefined && val !== "" && val !== "null";
+}
+
+let missingFields = [];
+
+function M(field) { missingFields.push(field); return "—"; }
+
+function render(data) {
+  missingFields = [];
+  const c = data.cadre || {};
+  const edu = data.education || [];
+  const fam = data.family || [];
+  const apps = data.appointments || [];
+  const poss = data.positions || [];
+  const assess = data.assessments || [];
+  const abtags = data.ability_tags || [];
+
+  // 全日制/在职学历
+  const fulltime = edu.find(e => e.is_full_time === true || e.is_full_time === "true");
+  const inservice = edu.find(e => e.is_full_time === false || e.is_full_time === "false");
+  const highest = inservice || fulltime || edu[0];
+
+  // 当前任职
+  const curApp = apps.find(a => a.is_current === true || a.is_current === "true") || apps[0];
+
+  // 年龄计算
+  let age = "—";
+  if (has(c, "birth_date")) {
+    try { const by = parseInt(c.birth_date.split(".")[0]); age = String(2026 - by); } catch(e) {}
+  }
+
+  // 经历统计
+  const appCount = apps.length || 0;
+  const streetExp = apps.filter(a => {
+    const u = (a.name || "").toLowerCase();
+    return u.includes("街") || u.includes("乡") || u.includes("镇");
+  }).length;
+
+  const fulltimeDeg = fulltime ? (fulltime.degree || fulltime.level || "") : "";
+  const inserviceDeg = inservice ? (inservice.degree || inservice.level || "") : "";
+
+  const appHtml = `
+  <div class="section">
+    <div class="section-title">干部基本信息明细</div>
+    <div class="grid4">
+      <div class="info-item"><span class="info-l">干部编号</span><span class="info-v">${v(c,"cadre_id",M("cadre_id"))}</span></div>
+      <div class="info-item"><span class="info-l">姓名</span><span class="info-v">${v(c,"name",M("name"))}</span></div>
+      <div class="info-item"><span class="info-l">性别</span><span class="info-v ${has(c,'gender')?'':'empty'}">${v(c,"gender",M("gender"))}</span></div>
+      <div class="info-item"><span class="info-l">民族</span><span class="info-v ${has(c,'ethnicity')?'':'empty'}">${v(c,"ethnicity",M("ethnicity"))}</span></div>
+      <div class="info-item"><span class="info-l">出生年月</span><span class="info-v ${has(c,'birth_date')?'':'empty'}">${v(c,"birth_date",M("birth_date"))}（${age}岁）</span></div>
+      <div class="info-item"><span class="info-l">政治面貌</span><span class="info-v ${has(c,'political_status')?'':'empty'}">${v(c,"political_status",M("political_status"))}</span></div>
+      <div class="info-item"><span class="info-l">入党时间</span><span class="info-v ${has(c,'party_join_date')?'':'empty'}">${v(c,"party_join_date",M("party_join_date"))}</span></div>
+      <div class="info-item"><span class="info-l">参加工作时间</span><span class="info-v ${has(c,'work_start_date')?'':'empty'}">${v(c,"work_start_date",M("work_start_date"))}</span></div>
+      <div class="info-item"><span class="info-l">籍贯</span><span class="info-v ${has(c,'native_place')?'':'empty'}">${v(c,"native_place",M("native_place"))}</span></div>
+      <div class="info-item"><span class="info-l">学历学位</span><span class="info-v">${v(highest,'level',M("highest_education"))}${highest?.degree?'·'+highest.degree:''}${inserviceDeg?' (在职:'+inserviceDeg+')':''}${fulltimeDeg?' (全日制:'+fulltimeDeg+')':''}</span></div>
+      <div class="info-item"><span class="info-l">现任职务</span><span class="info-v ${has(c,'current_position')?'':'empty'}">${v(c,"current_position",M("current_position"))}</span></div>
+      <div class="info-item"><span class="info-l">任现职时间</span><span class="info-v ${has(c,'current_start_date')?'':'empty'}">${v(c,"current_start_date",M("current_start_date"))}</span></div>
+      <div class="info-item"><span class="info-l">职级</span><span class="info-v ${has(c,'current_level')?'':'empty'}">${v(c,"current_level",M("current_level"))}${has(c,'current_rank')?'·'+v(c,'current_rank'):M("current_rank")}</span></div>
+      <div class="info-item"><span class="info-l">分工信息</span><span class="info-v ${has(c,'current_division')?'':'empty'}">${v(c,"current_division",M("current_division"))}</span></div>
+    </div>
+    <div class="miss" style="margin-top:16px">
+      <b>未查询到的字段 (${missingFields.length}个)：</b> ${missingFields.length === 0 ? "无" : missingFields.join("、")}
+    </div>
+  </div>`;
+
+  // 经历时间线
+  const tlHtml = apps.length > 0 ? `
+  <div class="sec">
+    <div class="sec-t">任职履历</div>
+    <div class="tl">${apps.slice().reverse().map(a=>`
+      <div class="tl-item ${a.is_current||a.is_current==='true'?'cur':''}">
+        <div class="tl-p">${a.start_date||""} - ${a.end_date||"至今"}</div>
+        <div class="tl-pos">${v(a,"name","")}</div>
+      </div>`).join("")}</div>
+  </div>` : "";
+
+  // 家庭
+  const famHtml = fam.length > 0 ? `
+  <div class="sec">
+    <div class="sec-t">家庭成员</div>
+    <div class="grid2">${fam.map(p=>`
+      <div class="info-item" style="border:none;padding:8px 0">
+        <span class="info-l">${v(p,"relation","")}</span>
+        <span class="info-v">${v(p,"name","")} (${v(p,"work_unit","")})</span>
+      </div>`).join("")}</div>
+  </div>` : "";
+
+  // 能力标签
+  const tagHtml = abtags.length > 0 ? `
+  <div class="sec">
+    <div class="sec-t">能力标签</div>
+    <div class="er-t">${abtags.map(t=>`<span class="tag ${t.confidence>0.8?'tb':'tg'}">${v(t,"tag","")} (${Math.round((t.confidence||0)*100)}%)</span>`).join("")}</div>
+  </div>` : "";
+
+  const missHtml = missingFields.length > 0 ? `
+  <div class="sec">
+    <div class="sec-t">数据完整度</div>
+    <div style="font-size:13px;line-height:2">
+      <div>✅ <b>已查询到</b>: 干部基本信息、学历(${edu.length}条)、家庭成员(${fam.length}人)、任职记录(${apps.length}段)、标签(${abtags.length}个)</div>
+      <div style="color:var(--tot);margin-top:8px">⚠️ <b>未查询到 (${missingFields.length}项)</b>: ${missingFields.join("、")}</div>
+      <div style="color:var(--tm);margin-top:4px;font-size:12px">这些字段在原始任免表中存在但未被 Demo 的 LLM 抽取到 Neo4j 中，后续通过结构化抽取器(Phase 3)可补齐。</div>
+    </div>
+  </div>` : "";
+
+  document.getElementById("app").innerHTML = `
+    <div class="hero">
+      <div class="hero-av">${v(c,"cadre_id","?")}</div>
+      <div class="hero-info">
+        <div class="hero-role">${v(c,"cadre_id","?")} <span class="hero-badge">${v(c,"current_level",M("current_level"))}</span></div>
+        <div class="hero-sub">${v(c,"current_position",M("current_position"))}</div>
+        <div class="hero-tags">
+          <span class="hero-tag">👤 ${v(c,"gender",M("gender"))}</span>
+          <span class="hero-tag">📅 ${v(c,"birth_date",M("birth_date"))}（${age}岁）</span>
+          <span class="hero-tag">🏛️ ${v(c,"current_unit",M("current_unit"))}</span>
+          <span class="hero-tag">⭐ 职级: ${v(c,"current_level",M("current_level"))}</span>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="hero-stat-v">${age==='—'?'—':(2026-parseInt(age)-2022)+'年'}</div><div class="hero-stat-l">正处级</div></div>
+          <div class="hero-stat"><div class="hero-stat-v">${appCount}个</div><div class="hero-stat-l">任职记录</div></div>
+          <div class="hero-stat"><div class="hero-stat-v">${fam.length}人</div><div class="hero-stat-l">家庭成员</div></div>
+        </div>
+      </div>
+    </div>
+    ${appHtml}
+    ${tlHtml}
+    ${famHtml}
+    ${tagHtml}
+    ${missHtml}
+  `;
+}
+
+loadCadre("001");
+</script>
+</body>
+</html>

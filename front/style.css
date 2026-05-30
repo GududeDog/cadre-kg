@@ -1,0 +1,241 @@
+/* ═══════════════════════════════════════════════════════════
+   style.css — 干部画像系统样式
+   主题：中国红 + 简洁白卡布局
+   ═══════════════════════════════════════════════════════════ */
+
+:root{
+  --primary:#c41e2c;
+  --primary-dark:#a01825;
+  --primary-light:#f5e6e8;
+  --primary-bg:#fdf2f3;
+  --text:#333;
+  --text-light:#666;
+  --text-muted:#999;
+  --border:#e8e8e8;
+  --bg:#f5f5f5;
+  --card:#fff;
+  --tag-blue:#e8f4fd;
+  --tag-blue-text:#1a73e8;
+  --tag-green:#e8f8e8;
+  --tag-green-text:#1a8c1a;
+  --tag-orange:#fff3e0;
+  --tag-orange-text:#e67e00;
+  --tag-red:#fde8e8;
+  --tag-red-text:#c41e2c;
+  --tag-purple:#f3e8fd;
+  --tag-purple-text:#7c3aed;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+  --radius:8px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:14px;
+  line-height:1.6;
+}
+
+/* ── 顶部导航 ── */
+.topbar{
+  position:fixed;top:0;left:0;right:0;height:48px;
+  background:var(--primary);display:flex;align-items:center;
+  padding:0 24px;z-index:100;color:#fff;
+}
+.topbar-logo{font-size:18px;font-weight:700;margin-right:24px}
+.topbar-title{font-size:14px;opacity:.9}
+.topbar-search{margin-left:auto;display:flex;gap:8px;align-items:center}
+.topbar-search input{
+  width:300px;height:32px;border:none;border-radius:16px;
+  padding:0 16px;font-size:13px;outline:none;
+}
+.topbar-date{font-size:12px;opacity:.7;margin-left:16px}
+.topbar-user{font-size:13px;margin-left:12px;opacity:.9}
+
+/* ── 主体 ── */
+.main{max-width:1200px;margin:64px auto 24px;padding:0 16px}
+.section{
+  background:var(--card);border-radius:var(--radius);
+  box-shadow:var(--shadow);margin-bottom:16px;padding:20px 24px;
+}
+.section-title{
+  font-size:16px;font-weight:700;color:var(--primary);
+  padding-bottom:12px;border-bottom:2px solid var(--primary);
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.section-title::before{
+  content:"";display:inline-block;width:4px;height:18px;
+  background:var(--primary);border-radius:2px;
+}
+
+/* ── 头部卡片 ── */
+.hero{
+  background:linear-gradient(135deg,var(--primary) 0%,#a01825 100%);
+  color:#fff;border-radius:var(--radius);padding:32px 28px;
+  margin-bottom:16px;display:flex;gap:24px;align-items:flex-start;
+}
+.hero-avatar{
+  width:80px;height:80px;border-radius:50%;
+  background:rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;font-weight:700;flex-shrink:0;
+}
+.hero-info{flex:1}
+.hero-name{
+  font-size:28px;font-weight:700;display:flex;
+  align-items:center;gap:12px;
+}
+.hero-badge{
+  font-size:12px;background:rgba(255,255,255,.25);
+  padding:2px 10px;border-radius:12px;
+}
+.hero-subtitle{opacity:.85;margin-top:4px;font-size:13px}
+.hero-tags{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.hero-tag{font-size:12px;background:rgba(255,255,255,.2);padding:3px 12px;border-radius:14px}
+.hero-stats{display:flex;gap:20px;margin-top:12px}
+.hero-stat{text-align:center}
+.hero-stat-val{font-size:24px;font-weight:700}
+.hero-stat-label{font-size:11px;opacity:.8}
+
+/* ── 基本信息网格 ── */
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.info-item{
+  padding:12px 0;border-bottom:1px solid var(--border);display:flex;
+}
+.info-item:nth-child(4n+1){padding-right:16px}
+.info-item:nth-child(4n+2){padding:12px 8px;border-bottom:1px solid var(--border);display:flex}
+.info-item:nth-child(4n+3){padding:12px 8px;border-bottom:1px solid var(--border);display:flex}
+.info-item:nth-child(4n){padding-left:16px;border-bottom:1px solid var(--border);display:flex}
+.info-label{color:var(--text-muted);width:80px;flex-shrink:0;font-size:13px}
+.info-value{font-weight:500;font-size:13px;flex:1}
+
+/* ── 经历标签栏 ── */
+.exp-row{display:flex;gap:16px;margin-bottom:12px;align-items:flex-start}
+.exp-label{width:100px;flex-shrink:0;font-weight:600;color:var(--text);font-size:13px;padding-top:3px}
+.exp-tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{padding:3px 12px;border-radius:14px;font-size:12px;white-space:nowrap}
+.tag-blue{background:var(--tag-blue);color:var(--tag-blue-text)}
+.tag-green{background:var(--tag-green);color:var(--tag-green-text)}
+.tag-orange{background:var(--tag-orange);color:var(--tag-orange-text)}
+.tag-red{background:var(--tag-red);color:var(--tag-red-text)}
+.tag-purple{background:var(--tag-purple);color:var(--tag-purple-text)}
+.tag-gray{background:#f0f0f0;color:#666}
+
+/* ── 简历时间线 ── */
+.timeline{position:relative;padding-left:24px}
+.timeline::before{
+  content:"";position:absolute;left:7px;top:8px;bottom:8px;
+  width:2px;background:var(--border);
+}
+.tl-item{position:relative;margin-bottom:16px;padding-left:20px}
+.tl-item::before{
+  content:"";position:absolute;left:-18px;top:6px;
+  width:10px;height:10px;border-radius:50%;
+  background:var(--primary);border:2px solid var(--card);z-index:1;
+}
+.tl-item.current::before{background:#fff;border:3px solid var(--primary)}
+.tl-period{font-size:12px;color:var(--text-muted);margin-bottom:2px}
+.tl-position{font-size:13px;font-weight:600}
+.tl-unit{font-size:12px;color:var(--text-light)}
+.tl-tags{display:flex;gap:4px;margin-top:4px}
+.tl-tag{font-size:11px;padding:1px 8px;border-radius:10px;background:var(--tag-blue);color:var(--tag-blue-text)}
+
+/* ── 双列布局 ── */
+.dual-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.ability-tag{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 12px;margin:3px;border-radius:16px;
+  font-size:12px;background:#f8f8f8;border:1px solid #eee;
+}
+.ability-tag.hot{font-size:14px;font-weight:700;color:var(--primary);background:var(--primary-bg);border-color:#f0d0d2}
+.ability-tag.warm{font-size:13px;font-weight:500;color:#333;background:#f0f5f0;border-color:#d0e8d0}
+.ability-tag.cool{color:var(--text-light);font-size:12px}
+
+/* ── 雷达图 ── */
+.radar-wrap{display:flex;justify-content:center;padding:16px 0}
+.radar-canvas{width:260px;height:260px}
+
+/* ── 短板卡片 ── */
+.shortcoming{
+  display:flex;gap:8px;padding:10px 0;
+  border-bottom:1px solid var(--border);align-items:flex-start;
+}
+.shortcoming:last-child{border-bottom:none}
+.shortcoming-badge{flex-shrink:0;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600}
+.shortcoming-badge.ability{background:#fff3e0;color:#e67e00}
+.shortcoming-badge.experience{background:#e8f4fd;color:#1a73e8}
+.shortcoming-badge.personality{background:#f3e8fd;color:#7c3aed}
+.shortcoming-text{font-size:13px;line-height:1.6}
+
+/* ── 工作实绩 ── */
+.achievement{
+  background:#fafafa;border:1px solid var(--border);
+  border-radius:8px;padding:16px;margin-bottom:12px;
+}
+.achievement-header{
+  display:flex;justify-content:space-between;
+  align-items:center;margin-bottom:8px;
+}
+.achievement-title{font-weight:700;font-size:14px}
+.achievement-level{padding:2px 10px;border-radius:12px;font-size:12px}
+.achievement-level.good{background:#e8f8e8;color:#1a8c1a}
+.achievement-level.mid{background:#fff3e0;color:#e67e00}
+.achievement-desc{font-size:13px;color:var(--text-light);line-height:1.7}
+.achievement-source{font-size:12px;color:var(--text-muted);margin-top:6px}
+
+/* ── 选拔标签 ── */
+.selection-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.selection-card{text-align:center;padding:16px 12px;border-radius:8px;border:1px solid var(--border)}
+.selection-card .icon{font-size:28px;margin-bottom:6px}
+.selection-card .label{font-size:13px;font-weight:600}
+.selection-card .count{font-size:20px;font-weight:700;color:var(--primary)}
+
+/* ── 监督信息 ── */
+.supervision-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.supervision-item{
+  padding:12px 16px;border-radius:8px;border:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.supervision-item .label{font-size:13px}
+.supervision-item .status{padding:2px 10px;border-radius:12px;font-size:12px}
+.status-ok{background:#e8f8e8;color:#1a8c1a}
+.status-warn{background:#fff3e0;color:#e67e00}
+.status-danger{background:#fde8e8;color:#c41e2c}
+
+/* ── 关系图谱 ── */
+.relation-container{display:grid;grid-template-columns:1fr 260px;gap:20px;align-items:start}
+.relation-graph{
+  position:relative;height:320px;background:#fafafa;
+  border-radius:8px;border:1px solid var(--border);overflow:hidden;
+}
+.relation-sidebar{max-height:320px;overflow-y:auto}
+.relation-list{list-style:none;padding:0}
+.relation-list li{
+  padding:8px 0;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;font-size:13px;
+}
+.relation-list li:last-child{border-bottom:none}
+.relation-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.relation-name{font-weight:600}
+.relation-type{font-size:11px;color:var(--text-muted);margin-left:auto}
+
+/* ── 培养方向 ── */
+.direction-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.direction-card{padding:16px;border-radius:8px;border:1px solid var(--border)}
+.direction-card h4{font-size:14px;margin-bottom:8px;color:var(--primary)}
+.direction-card ul{padding-left:16px}
+.direction-card li{font-size:13px;margin-bottom:4px;color:var(--text-light)}
+
+/* ── 风险预警行 ── */
+.alert-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.alert-item{padding:12px 16px;border-radius:8px;display:flex;align-items:center;gap:12px}
+.alert-item.ok{background:#f6faf6;border:1px solid #d0e8d0}
+.alert-item.warn{background:#fffbf0;border:1px solid #f0d8a0}
+.alert-item.danger{background:#fef2f2;border:1px solid #f0b0b0}
+.alert-icon{font-size:20px}
+.alert-text .label{font-size:12px;color:var(--text-muted)}
+.alert-text .value{font-size:13px;font-weight:600}
+
+/* ── 关系网络画布 ── */
+.network-canvas{width:100%;height:300px}
