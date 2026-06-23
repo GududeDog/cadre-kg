@@ -1,168 +1,316 @@
 // ═══════════════════════════════════════════════════════════
-// data.js — 干部画像 Mock 数据
-// 后续对接 FastAPI 时替换为 API 调用即可
+// data.js — 干部画像 Mock 数据 (新实体结构)
 // ═══════════════════════════════════════════════════════════
 
 const MOCK_DATA = {
   cadre_id: "001",
-  name: "001",
+  name: "张三",
   gender: "男",
   ethnicity: "汉族",
   birth_date: "1981.10",
   age: 44,
-  political_status: "中共党员",
+  native_place: "江苏盐城",
+  birth_place: "江苏省东台市",
   party_join_date: "2006.06",
   work_start_date: "2003.07",
-  native_place: "江苏盐城",
+  retirement_date: "2041.10",
   health_status: "健康",
-  highest_education: "研究生",
-  highest_degree: "管理学硕士",
-  highest_school: "中央党校",
-  current_position: "朝阳区发改委党组书记、主任",
-  current_level: "正处级",
-  current_rank: "一级调研员",
-  current_start_date: "2025.10",
-  current_unit: "朝阳区发改委",
-  current_division: "主持全面工作，分管办公室、综合科",
-  division_departments: ["办公室", "综合科"],
+  tech_title: "高级经济师",
+  specialty: "区域经济发展、产业规划",
 
-  career_history: [
-    {start:"2003.07",end:"2006.04",unit:"朝阳区将台地区办事处（乡）",position:"科员",level:"科员级",is_current:false},
-    {start:"2006.04",end:"2007.03",unit:"朝阳区将台地区办事处（乡）",position:"办公室科员",level:"科员级",is_current:false},
-    {start:"2007.03",end:"2007.10",unit:"朝阳区将台地区工委（乡党委）",position:"组织科科员",level:"科员级",is_current:false},
-    {start:"2007.10",end:"2010.01",unit:"朝阳区将台地区工委（乡党委）",position:"组织科副科长",level:"副科级",is_current:false},
-    {start:"2010.01",end:"2011.05",unit:"朝阳区太阳宫地区办事处（乡）",position:"办事处副主任",level:"副处级",is_current:false},
-    {start:"2011.05",end:"2014.02",unit:"朝阳区太阳宫地区办事处（乡）",position:"办事处副主任",level:"副处级",is_current:false},
-    {start:"2014.02",end:"2016.07",unit:"朝阳区太阳宫地区工委",position:"副书记",level:"副处级",is_current:false},
-    {start:"2016.07",end:"2019.03",unit:"朝阳区发改委",position:"副书记、副主任",level:"副处级",is_current:false},
-    {start:"2019.03",end:"2019.11",unit:"朝阳区发改委",position:"副书记、副主任",level:"副处级",is_current:false},
-    {start:"2019.11",end:"2022.09",unit:"朝阳区发改委",position:"副书记、副主任、纪检组组长",level:"副处级",is_current:false},
-    {start:"2022.09",end:"2025.10",unit:"朝阳区南磨房地区工委（乡党委）",position:"书记、办事处主任",level:"正处级",is_current:false},
-    {start:"2025.10",end:"至今",unit:"朝阳区发改委",position:"党组书记、主任",level:"正处级",is_current:true},
+  // 教育经历
+  educations: [
+    {
+      edu_id: "edu_001_01",
+      edu_level: "大学",
+      degree: "法学学士",
+      school: "中国政法大学",
+      major: "法学专业",
+      edu_type: "全日制",
+    },
+    {
+      edu_id: "edu_001_02",
+      edu_level: "研究生",
+      degree: "管理学硕士",
+      school: "中央党校研究生院",
+      major: "马克思主义哲学专业",
+      edu_type: "在职",
+    },
   ],
 
-  education_detail: [
-    {type:"全日制",school:"中国政法大学",major:"法学专业",degree:"法学学士",level:"大学",period:"1999-2003"},
-    {type:"在职",school:"中央党校研究生院",major:"马克思主义哲学专业",degree:"硕士",level:"研究生",period:"2012-2015"}
+  // 关系人
+  relatives: [
+    {
+      relation_id: "rel_001_01",
+      relation_type: "配偶",
+      name: "001配偶",
+      age: 42,
+      political_status: "中共党员",
+      work_unit_position: "朝阳区三间房乡经管站 八级职员",
+    },
+    {
+      relation_id: "rel_001_02",
+      relation_type: "父亲",
+      name: "001父亲",
+      age: 72,
+      political_status: "群众",
+      work_unit_position: "江苏省东台市退休",
+    },
+    {
+      relation_id: "rel_001_03",
+      relation_type: "母亲",
+      name: "001母亲",
+      age: 70,
+      political_status: "群众",
+      work_unit_position: "江苏省东台市退休",
+    },
+    {
+      relation_id: "rel_001_04",
+      relation_type: "子女",
+      name: "001子女",
+      age: 16,
+      political_status: "群众",
+      work_unit_position: "北京某中学 学生",
+    },
   ],
 
-  family_members: [
-    {relation:"配偶",name:"001配偶",work_unit:"朝阳区三间房乡经管站",political_status:"中共党员",position:"八级职员"},
-    {relation:"父亲",name:"001父亲",work_unit:"江苏省东台市退休",political_status:"群众",position:"退休"},
-    {relation:"母亲",name:"001母亲",work_unit:"江苏省东台市退休",political_status:"群众",position:"退休"},
-    {relation:"子女",name:"001子女",work_unit:"北京某中学",political_status:"群众",position:"学生"},
+  // 简历 / 任职记录
+  resumes: [
+    {
+      resume_id: "resume_001_01",
+      period: "2003.07-2006.04",
+      unit: "朝阳区将台地区办事处（乡）",
+      department: "办公室",
+      position: "科员",
+      region: "朝阳区",
+      dept: "办公室",
+      rank: "科员级",
+    },
+    {
+      resume_id: "resume_001_02",
+      period: "2006.04-2007.03",
+      unit: "朝阳区将台地区办事处（乡）",
+      department: "办公室",
+      position: "办公室科员",
+      region: "朝阳区",
+      dept: "办公室",
+      rank: "科员级",
+    },
+    {
+      resume_id: "resume_001_03",
+      period: "2007.03-2007.10",
+      unit: "朝阳区将台地区工委（乡党委）",
+      department: "组织科",
+      position: "组织科科员",
+      region: "朝阳区",
+      dept: "组织科",
+      rank: "科员级",
+    },
+    {
+      resume_id: "resume_001_04",
+      period: "2007.10-2010.01",
+      unit: "朝阳区将台地区工委（乡党委）",
+      department: "组织科",
+      position: "组织科副科长",
+      region: "朝阳区",
+      dept: "组织科",
+      rank: "副科级",
+    },
+    {
+      resume_id: "resume_001_05",
+      period: "2010.01-2014.02",
+      unit: "朝阳区太阳宫地区办事处（乡）",
+      department: "",
+      position: "办事处副主任",
+      region: "朝阳区",
+      dept: "",
+      rank: "副处级",
+    },
+    {
+      resume_id: "resume_001_06",
+      period: "2014.02-2016.07",
+      unit: "朝阳区太阳宫地区工委",
+      department: "",
+      position: "副书记",
+      region: "朝阳区",
+      dept: "",
+      rank: "副处级",
+    },
+    {
+      resume_id: "resume_001_07",
+      period: "2016.07-2019.03",
+      unit: "朝阳区发改委",
+      department: "",
+      position: "副书记、副主任",
+      region: "朝阳区",
+      dept: "",
+      rank: "副处级",
+    },
+    {
+      resume_id: "resume_001_08",
+      period: "2019.03-2022.09",
+      unit: "朝阳区发改委",
+      department: "",
+      position: "副书记、副主任、纪检组组长",
+      region: "朝阳区",
+      dept: "",
+      rank: "副处级",
+    },
+    {
+      resume_id: "resume_001_09",
+      period: "2022.09-2025.10",
+      unit: "朝阳区南磨房地区工委（乡党委）",
+      department: "",
+      position: "书记、办事处主任",
+      region: "朝阳区",
+      dept: "",
+      rank: "正处级",
+    },
+    {
+      resume_id: "resume_001_10",
+      period: "2025.10-至今",
+      unit: "朝阳区发改委",
+      department: "",
+      position: "党组书记、主任",
+      region: "朝阳区",
+      dept: "",
+      rank: "正处级",
+    },
   ],
 
-  familiar_fields: ["政法","规划建设","经济"],
-  professional_labels: ["政法干部","规划干部"],
-  economic_cadre_tag: false,
-  party_affairs_cadre_tag: false,
-  political_legal_cadre_tag: true,
-  urban_construction_cadre_tag: true,
-
-  ability_tags: [
-    {tag:"组织协调能力强",category:"能力特点",confidence:0.9,hot:true},
-    {tag:"应急处理能力强",category:"能力特点",confidence:0.85,hot:true},
-    {tag:"执行力强，善于抓落实",category:"能力特点",confidence:0.88,hot:true},
-    {tag:"统筹驾驭能力强",category:"能力特点",confidence:0.82},
-    {tag:"注重思考谋划",category:"能力特点",confidence:0.78},
-    {tag:"调查研究能力强",category:"能力特点",confidence:0.8},
-    {tag:"善于做群众工作",category:"能力特点",confidence:0.85},
-    {tag:"文字能力强",category:"能力特点",confidence:0.75},
-    {tag:"对党忠诚",category:"政治素养",confidence:0.95,hot:true},
-    {tag:"政治敏感性强",category:"政治素养",confidence:0.9},
-    {tag:"大局意识强",category:"政治素养",confidence:0.88},
-    {tag:"严守政治纪律",category:"政治素养",confidence:0.92},
-    {tag:"敢于担当",category:"工作作风",confidence:0.9,hot:true},
-    {tag:"作风务实",category:"工作作风",confidence:0.92,hot:true},
-    {tag:"工作有韧性",category:"工作作风",confidence:0.85},
-    {tag:"原则性强",category:"工作作风",confidence:0.82},
-    {tag:"勤奋敬业",category:"工作作风",confidence:0.88},
-    {tag:"严谨细致",category:"个性特征",confidence:0.85},
-    {tag:"处事果断",category:"个性特征",confidence:0.82},
-    {tag:"性格沉稳",category:"个性特征",confidence:0.78},
-    {tag:"善于团结同志",category:"个性特征",confidence:0.85},
-    {tag:"公道正派",category:"个性特征",confidence:0.88},
+  // 职务情况
+  position_statuses: [
+    {
+      position_status_id: "ps_001_01",
+      current_position: "朝阳区发改委党组书记、主任",
+      proposed_position: "",
+      proposed_removal: "",
+    },
   ],
 
-  radar_scores: {
-    "素质基础": 92,
-    "胜任能力": 88,
-    "工作绩效": 85,
-    "自画像": 78,
-    "负面信息": 95
-  },
-
-  main_shortcomings: [
-    {type:"能力类",text:"创新意识不够强，面对新经济形态研究不够深入"},
-    {type:"经验类",text:"缺少科技、数字化领域工作经验"},
-    {type:"性格类",text:"性格偏内敛，主动沟通交流意识需加强"},
+  // 年度考核
+  annual_assessments: [
+    { assessment_id: "assess_001_2022", result: "称职", commendation: "" },
+    { assessment_id: "assess_001_2023", result: "称职", commendation: "" },
+    { assessment_id: "assess_001_2024", result: "优秀", commendation: "嘉奖" },
   ],
 
-  work_performances: [
-    {title:"推动"两区"建设取得突破",desc:"牵头推进国家服务业扩大开放综合示范区建设，推动政策落地见效",level:"突出",source:"述职报告"},
-    {title:"谋划产业布局成效显著",desc:"推动产业园区升级优化，引进多家龙头企业，招商引资工作取得新突破",level:"良好",source:"考察材料"},
-    {title:"深化基层治理创新",desc:"推进社区治理数字化转型，建设智慧社区平台，基层治理水平显著提升",level:"突出",source:"述职报告"},
+  // 能力特征
+  abilities: [
+    { ability_id: "ab_001_01", time: "2024", ability_trait: "组织协调能力强", source_doc: "换届考察材料" },
+    { ability_id: "ab_001_02", time: "2024", ability_trait: "应急处理能力强", source_doc: "换届考察材料" },
+    { ability_id: "ab_001_03", time: "2024", ability_trait: "执行力强、善于抓落实", source_doc: "换届考察材料" },
+    { ability_id: "ab_001_04", time: "2024", ability_trait: "调查研究能力强", source_doc: "换届考察材料" },
+    { ability_id: "ab_001_05", time: "2024", ability_trait: "善于做群众工作", source_doc: "换届考察材料" },
+    { ability_id: "ab_001_06", time: "2024", ability_trait: "文字能力强", source_doc: "换届考察材料" },
+    { ability_id: "ab_001_07", time: "2024", ability_trait: "领导管理能力强", source_doc: "换届考察材料" },
   ],
 
-  structural_tags: [
-    {tag:"经济干部",icon:"📊"},
-    {tag:"规划干部",icon:"📐"},
-    {tag:"政法干部",icon:"⚖️"},
-    {tag:"街乡书记经历",icon:"🏘️"},
-    {tag:"正处级关键岗位",icon:"⭐"},
-    {tag:"一把手",icon:"👔"},
-    {tag:"副处级后备干部",icon:"📋"},
+  // 标签
+  tags: [
+    { tag_id: "tag_001_01", style_tag: "政法干部", special_tag: "", issue_tag: "",
+      assessment_year: 2024, source_doc: "换届考察材料" },
+    { tag_id: "tag_001_02", style_tag: "规划干部", special_tag: "", issue_tag: "",
+      assessment_year: 2024, source_doc: "换届考察材料" },
+    { tag_id: "tag_001_03", style_tag: "经济干部", special_tag: "", issue_tag: "",
+      assessment_year: 2024, source_doc: "换届考察材料" },
   ],
 
-  supervision: [
-    {label:"审计审计情况",status:"无",type:"ok"},
-    {label:"纪检监察情况",status:"无",type:"ok"},
-    {label:"信访举报情况",status:"无",type:"ok"},
-    {label:"经济责任审计结果",status:"无",type:"ok"},
-    {label:"越级提拔情况",status:"无",type:"ok"},
+  // 性格特征
+  personalities: [
+    {
+      personality_id: "per_001_01",
+      time: "2024",
+      trait: "严谨细致、处事果断、性格沉稳",
+      source_doc: "大调研",
+      shortcoming: "性格偏内敛",
+      positive_eval: "作风务实、敢于担当、善于团结同志",
+      negative_eval: "主动沟通交流意识需加强",
+      issue_tag_1: "",
+      issue_tag_2: "",
+      time_2: "",
+      source_doc_2: "",
+    },
   ],
 
-  career_trajectory: [
-    {year:"2003",phase:"科级以下",label:"单点执行",desc:"街道科员，基层工作"},
-    {year:"2007",phase:"副科级",label:"组织协调",desc:"组织科副科长"},
-    {year:"2010",phase:"副处级",label:"街乡副职",desc:"太阳宫副主任"},
-    {year:"2014",phase:"副处级",label:"街乡正职",desc:"太阳宫副书记"},
-    {year:"2016",phase:"副处级",label:"委办局副职",desc:"发改委副主任"},
-    {year:"2022",phase:"正处级",label:"街乡正职",desc:"南磨房书记"},
-    {year:"2025",phase:"正处级",label:"委办局正职",desc:"发改委主任"},
+  // 主要不足
+  shortcomings: [
+    {
+      shortcoming_id: "sc_001_01",
+      assessment_year: 2024,
+      content: "创新意识不够强，面对新经济形态研究不够深入",
+      source_doc: "换届考察材料",
+    },
+    {
+      shortcoming_id: "sc_001_02",
+      assessment_year: 2024,
+      content: "缺少科技、数字化领域工作经验",
+      source_doc: "换届考察材料",
+    },
   ],
 
-  relations: [
-    {name:"李建国",type:"同事",position:"朝阳区发改委副主任",distance:"center"},
-    {name:"王芳",type:"配偶",work_unit:"三间房乡经管站"},
-    {name:"张强",type:"校友",school:"中国政法大学"},
-    {name:"刘洋",type:"同事",position:"太阳宫地区工委"},
-    {name:"赵明",type:"上级",position:"区委组织部部长"},
+  // 熟悉领域
+  familiar_fields: [
+    { field_id: "ff_001_01", assessment_year: 2024, field_name: "政法", source_doc: "换届考察材料" },
+    { field_id: "ff_001_02", assessment_year: 2024, field_name: "规划建设", source_doc: "换届考察材料" },
+    { field_id: "ff_001_03", assessment_year: 2024, field_name: "宏观经济", source_doc: "换届考察材料" },
   ],
 
-  growth_traits: [
-    {title:"从执行型向统筹型转变",desc:"经历基层→中层→主政三个关键跃升",tags:["执行力强→统筹协调→战略规划"]},
-    {title:"作风演变",desc:"雷厉风行→务实稳健→创新突破，逐步形成复合型领导风格"},
+  // 奖惩情况
+  reward_punishes: [
+    {
+      reward_punish_id: "rp_001_01",
+      seq_no: 1,
+      source: "个人述职报告",
+      source_doc: "个人述职报告",
+      content: "北京市优秀共产党员",
+      time: "2022",
+      source_2: "",
+    },
+    {
+      reward_punish_id: "rp_001_02",
+      seq_no: 2,
+      source: "个人述职报告",
+      source_doc: "个人述职报告",
+      content: "朝阳区优秀领导干部",
+      time: "2024",
+      source_2: "",
+    },
   ],
-  待突破瓶颈: "战略谋划和数字化转型能力仍需加强",
-  风格变化趋势: "雷厉风行→务实稳健→创新突破",
 
-  awards: [
-    {year:2022,name:"北京市优秀共产党员",level:"省部级"},
-    {year:2024,name:"朝阳区优秀领导干部",level:"区级"},
+  // 工作业绩
+  performances: [
+    {
+      performance_id: "perf_001_01",
+      content: '推动"两区"建设取得突破',
+      source: "述职报告",
+      source_doc: "个人述职报告",
+      work_experience: "牵头推进国家服务业扩大开放综合示范区建设",
+      work_performance: "推动政策落地见效，招商引资工作取得新突破",
+      source_doc_2: "换届考察材料",
+    },
+    {
+      performance_id: "perf_001_02",
+      content: "谋划产业布局成效显著",
+      source: "考察材料",
+      source_doc: "换届考察材料",
+      work_experience: "推动产业园区升级优化",
+      work_performance: "引进多家龙头企业",
+      source_doc_2: "换届考察材料",
+    },
   ],
 
-  annual_assessment: [
-    {year:2022,result:"称职"},
-    {year:2023,result:"称职"},
-    {year:2024,result:"称职"},
+  // 能力演变
+  ability_evolutions: [
+    {
+      evolution_id: "evo_001_01",
+      time: "2024",
+      ability_structure: "从执行型向统筹型转变",
+      source_doc_1: "大调研报告原文",
+      work_effect: "团队建设、跨部门协调能力显著提升",
+      source_doc_2: "大调研报告原文",
+      performance_change: "攻坚能力+9%、抓落实能力+14%",
+      source_doc_3: "大调研",
+    },
   ],
 };
-
-const MOCK_EVENTS = [
-  {year:"2018",desc:"朝阳区"疏整促"专项行动"},
-  {year:"2020",desc:"疫情防控一线"},
-  {year:"2022",desc:"南磨房乡社区治理创新"},
-  {year:"2024",desc:"发改委两区建设推进"},
-];

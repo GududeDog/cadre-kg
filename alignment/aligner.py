@@ -11,10 +11,17 @@ from embedding.embedder import Embedder
 class EntityAligner:
     """Align & deduplicate entities across chunks by embedding + rules."""
 
+    # 带显式唯一ID前缀的实体，跳过模糊合并（ID本身就保证唯一）
+    _SKIP_FUZZY_PREFIXES = (
+        "edu_", "ps_", "rp_", "assess_", "resume_",
+        "per_", "ab_", "ff_", "tag_", "perf_", "sc_",
+        "evo_", "wr_", "dv_", "pr_", "ev_", "ind_",
+        "rel_", "perf_", "apt_",
+    )
+
     def __init__(self, threshold: float = 0.92):
         self.embedder = Embedder()
         self.threshold = threshold
-        # alias rules: short name → canonical name
         self.alias_rules = {}
 
     def build_alias_rules(self, all_entities: List[Dict]):
@@ -23,24 +30,16 @@ class EntityAligner:
             if not name:
                 continue
             if ent.get("type") == "Cadre":
-                short = re.sub(r"[同志]", "", name).strip()
-                if short and short != name:
-                    self.alias_rules[short] = name
-                # "001" patterns
-                m = re.match(r"(\d{3})", name)
+                # cadre_id patterns
+                m = re.match(r"(\d{3,4})", name)
                 if m:
                     self.alias_rules[m.group(1)] = name
-            if ent.get("type") == "Department":
-                short = re.sub(r"[（(].*?[）)]", "", name).strip()
-                if short and short != name:
-                    self.alias_rules[short] = name
 
     def normalize_name(self, name: str) -> str:
         return self.alias_rules.get(name, name)
 
     def align_entities(self, entities: List[Dict]) -> List[Dict]:
         self.build_alias_rules(entities)
-        # dedup by normalized name
         seen: Dict[str, Dict] = {}
         for ent in entities:
             name = self.normalize_name(ent.get("name", ""))
@@ -53,7 +52,6 @@ class EntityAligner:
                 normalized["name"] = name
                 seen[key] = normalized
         result = list(seen.values())
-        # embedding-based fuzzy merge for similar entities
         result = self._fuzzy_merge(result)
         return result
 
@@ -64,7 +62,6 @@ class EntityAligner:
             if k not in tp or not tp[k]:
                 tp[k] = v
         target["properties"] = tp
-        # merge source file list
         sources = target.setdefault("_sources", [])
         sf = source.get("_sources", [str(source.get("source_file", ""))])
         for s in sf:
@@ -74,11 +71,16 @@ class EntityAligner:
     def _fuzzy_merge(self, entities: List[Dict]) -> List[Dict]:
         names = []
         indices = []
+        skipped_indices = set()
         for i, ent in enumerate(entities):
             n = ent.get("name", "")
-            if n:
-                names.append(n)
-                indices.append(i)
+            if not n:
+                continue
+            if n.startswith(self._SKIP_FUZZY_PREFIXES):
+                skipped_indices.add(i)
+                continue
+            names.append(n)
+            indices.append(i)
         if len(names) < 2:
             return entities
         embs = self.embedder.embed(names)
@@ -92,13 +94,16 @@ class EntityAligner:
             for j in range(i + 1, len(names)):
                 if indices[j] not in merged_out and sim[i][j] >= self.threshold:
                     cluster.append(indices[j])
-            # keep first, discard rest
             keep = entities[cluster[0]]
             for ci in cluster[1:]:
                 self._merge_props(keep, entities[ci])
                 merged_out.add(ci)
             result.append(keep)
             merged_out.add(cluster[0])
+        # 把跳过模糊合并的实体加回结果
+        for i in skipped_indices:
+            if i not in merged_out:
+                result.append(entities[i])
         return result
 
     def normalize_tags(self, tags: List[Dict]) -> List[Dict]:
@@ -109,7 +114,6 @@ class EntityAligner:
             name = t.get("name", "")
             target = t.get("target", "")
             category = t.get("type", "")
-            # synonym resolution
             for canonical, variants in TAG_SYNONYM.items():
                 if name in variants:
                     name = canonical

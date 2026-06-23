@@ -12,6 +12,7 @@ class Document:
     file_path: Path
     doc_type: str  # cadre_form / evaluation / investigation / report / work_division / txt
     raw_text: str = ""
+    paras_text: str = ""  # paragraph-only text (no table | join)
     tables: List[Dict] = field(default_factory=list)
     metadata: Dict = field(default_factory=dict)
     sheets: Dict[str, List[Dict]] = field(default_factory=dict)
@@ -66,6 +67,7 @@ class DocumentParser:
         doc = Document(file_path=path, doc_type="")
         paras = [p.text for p in d.paragraphs if p.text.strip()]
         doc.raw_text = "\n".join(paras)
+        doc.paras_text = doc.raw_text  # save clean paragraph text
         for table in d.tables:
             raw_rows = [[cell.text.strip() for cell in row.cells] for row in table.rows]
             rows = raw_rows[1:] if len(raw_rows) > 1 else []
@@ -107,11 +109,9 @@ class DocumentParser:
     # ── cadre_form 专用解析 ─────────────────────────────
     @staticmethod
     def parse_cadre_form(doc: Document) -> Document:
-        """Clean cadre_form raw_text: dedup table cells, keep paragraphs."""
-        # Collect paragraph text (includes resume)
-        paras_text = doc.raw_text if doc.raw_text else ""
+        """Clean cadre_form: use paragraph text + deduped table rows."""
+        paras_text = doc.paras_text or ""
 
-        # Clean table content: dedup adjacent identical cells
         table_lines = []
         for table in doc.tables:
             raw = table.get("raw_rows", [])
@@ -136,6 +136,7 @@ class DocumentParser:
     # ── type inference ──────────────────────────────────
     _TYPE_MAP = {
         "干部审批表": "cadre_form",
+        "任免表": "cadre_form",
         "民主测评汇总表": "evaluation_summary",
         "考察材料": "investigation",
         "述职报告": "report",
@@ -152,4 +153,9 @@ class DocumentParser:
         for kw, t in cls._TYPE_MAP.items():
             if kw in stem:
                 return t
+        for parent in path.parents:
+            parent_name = parent.name
+            for kw, t in cls._TYPE_MAP.items():
+                if kw in parent_name:
+                    return t
         return "txt"

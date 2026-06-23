@@ -1,0 +1,19 @@
+category: annual_assessment
+display_name: 年度考核
+
+# ── 从述职报告中抽取 ──
+writing_style_rules:
+  - '从文本中分析述职报告的整体文风类型：务实型（事实+数据为主）、理论型（政策理论阐述为主）、数据型（大量量化指标）、叙事型（故事化叙述为主）、综合型（多类型混合）'
+  - '每种文风类型附上对应的原文片段作为 source_fragment'
+
+division_rules:
+  - '提取干部在述职报告中提到的岗位分工内容'
+  - '附上对应的原文片段作为 source_fragment'
+
+ability_style_rules:
+  - '提取述职报告中体现的工作作风描述，如务实、担当、创新、严谨、勤奋等'
+  - '每种工作作风附上对应的原文片段作为 source_fragment'
+
+performance_change_rules:
+  - '提取述职报告中体现的成绩变化描述，如"同比增长XX%""较去年提升""取得突破"等'
+  - '附上对应的原文片段作为 source_fragment'

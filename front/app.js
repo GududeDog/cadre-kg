@@ -53,11 +53,11 @@ function heroSection(d) {
         <span class="hero-tag">👤 ${d.gender}</span>
         <span class="hero-tag">📅 ${d.birth_date}（${d.age}岁）</span>
         <span class="hero-tag">🏛️ ${d.current_unit}</span>
-        <span class="hero-tag">⭐ ${d.current_level}（${d.career_history.length}段经历）</span>
+        <span class="hero-tag">⭐ ${d.current_level}（${(d.appointments || d.career_history || []).length}段经历）</span>
       </div>
       <div class="hero-stats">
         <div class="hero-stat"><div class="hero-stat-val">6年</div><div class="hero-stat-label">正处级</div></div>
-        <div class="hero-stat"><div class="hero-stat-val">${d.career_history.length}个</div><div class="hero-stat-label">历任岗位</div></div>
+        <div class="hero-stat"><div class="hero-stat-val">${(d.appointments || d.career_history || []).length}个</div><div class="hero-stat-label">历任岗位</div></div>
         <div class="hero-stat"><div class="hero-stat-val">7年</div><div class="hero-stat-label">街乡经历</div></div>
       </div>
     </div>
@@ -98,26 +98,38 @@ function basicInfoSection(d) {
 }
 
 function careerSection(d) {
+  // 优先用 API 返回的 appointments（Neo4j 真实数据），fallback 到 MOCK_DATA.career_history
+  const appointments = d.appointments || [];
+  const fallbackHistory = d.career_history || [];
+  const items = appointments.length > 0
+    ? appointments.map(a => ({
+        start: a.start_date || '',
+        end:   a.end_date   || (a.is_current === true || a.is_current === 'true' ? '至今' : ''),
+        position: a.position_name || '',
+        unit:  a.org_name || '',
+        is_current: a.is_current === true || a.is_current === 'true',
+      })).slice().reverse()
+    : fallbackHistory.slice().reverse();
   return `
   <div class="section">
     <div class="section-title">任职经历与履历分析</div>
     <div class="exp-row">
       <div class="exp-label">经历标签</div>
       <div class="exp-tags">
-        ${d.structural_tags.map(t => `<span class="tag tag-blue">${t.icon} ${t.tag}</span>`).join("")}
+        ${(d.structural_tags || []).map(t => `<span class="tag tag-blue">${t.icon} ${t.tag}</span>`).join("")}
       </div>
     </div>
     <div class="exp-row">
       <div class="exp-label">熟悉领域</div>
       <div class="exp-tags">
-        ${d.familiar_fields.map(f => `<span class="tag tag-green">${f}</span>`).join("")}
-        ${d.professional_labels.map(f => `<span class="tag tag-orange">${f}</span>`).join("")}
+        ${(d.familiar_fields || []).map(f => `<span class="tag tag-green">${f}</span>`).join("")}
+        ${(d.professional_labels || []).map(f => `<span class="tag tag-orange">${f}</span>`).join("")}
       </div>
     </div>
     <div style="margin-top:20px">
       <h4 style="font-size:14px;margin-bottom:12px;color:var(--text-light)">经历时间线</h4>
       <div class="timeline">
-        ${d.career_history.slice().reverse().map(c => `
+        ${items.map(c => `
           <div class="tl-item ${c.is_current ? "current" : ""}">
             <div class="tl-period">${c.start} - ${c.end}</div>
             <div class="tl-position">${c.position}</div>

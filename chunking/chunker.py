@@ -5,6 +5,8 @@ from typing import Dict, List, Optional
 
 import jieba
 
+from config import CHUNK_HARD_MAX
+
 
 @dataclass
 class Chunk:
@@ -17,9 +19,11 @@ class Chunk:
 
 
 class Chunker:
-    def __init__(self, chunk_size: int = 512, overlap: int = 64):
+    def __init__(self, chunk_size: int = 2048, overlap: int = 64,
+                 hard_max: int = CHUNK_HARD_MAX):
         self.chunk_size = chunk_size
         self.overlap = overlap
+        self.hard_max = hard_max
         for w in ["南磨房乡", "高碑店乡", "组织委员", "地区工委",
                    "民主测评", "考察材料", "述职报告", "一级调研员"]:
             jieba.add_word(w)
@@ -98,21 +102,35 @@ class Chunker:
         if not text.strip():
             return []
         paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
-        chunks = []
-        current = []
+        if len(paragraphs) <= 1 and len(text) > self.chunk_size:
+            paragraphs = [p.strip() for p in re.split(r"\n", text) if p.strip()]
+        chunks: List[Chunk] = []
+        current: List[str] = []
         current_len = 0
         idx = 0
+
+        def emit(text_: str):
+            nonlocal idx
+            if not text_.strip():
+                return
+            tokens = list(jieba.cut(text_))
+            chunks.append(Chunk(
+                text=text_, tokens=tokens,
+                source_file=str(doc.file_path), doc_type=doc.doc_type,
+                chunk_index=idx))
+            idx += 1
+
         for para in paragraphs:
+            if len(para) > self.hard_max:
+                if current:
+                    emit("\n\n".join(current))
+                    current, current_len = [], 0
+                for i in range(0, len(para), self.hard_max):
+                    emit(para[i:i + self.hard_max])
+                continue
             para_len = len(para)
             if current_len + para_len > self.chunk_size and current:
-                combined = "\n\n".join(current)
-                tokens = list(jieba.cut(combined))
-                chunks.append(Chunk(
-                    text=combined, tokens=tokens,
-                    source_file=str(doc.file_path), doc_type=doc.doc_type,
-                    chunk_index=idx))
-                idx += 1
-                # overlap: keep last overlap chars
+                emit("\n\n".join(current))
                 overlap_text = ""
                 overlap_len = 0
                 for p in reversed(current):
@@ -126,10 +144,29 @@ class Chunker:
             current.append(para)
             current_len += para_len
         if current:
-            combined = "\n\n".join(current)
-            tokens = list(jieba.cut(combined))
-            chunks.append(Chunk(
-                text=combined, tokens=tokens,
-                source_file=str(doc.file_path), doc_type=doc.doc_type,
-                chunk_index=idx))
+            emit("\n\n".join(current))
         return chunks
+
+    def _force_split(self, text: str, max_size: int) -> List[str]:
+        """Force-split a long text at safe boundaries (date/sentence/newline)."""
+        if len(text) <= max_size:
+            return [text]
+        boundaries = re.compile(r"(?<=\n)|(?<=[。；])|(?=\d{4}[./-]\d{2})")
+        parts = [p for p in boundaries.split(text) if p]
+        pieces: List[str] = []
+        cur = ""
+        for p in parts:
+            if len(cur) + len(p) > max_size and cur:
+                pieces.append(cur)
+                cur = p
+            else:
+                cur += p
+        if cur:
+            pieces.append(cur)
+        for piece in pieces:
+            if len(piece) > max_size:
+                step = max_size
+                idx = pieces.index(piece)
+                pieces[idx:idx + 1] = [piece[i:i + step] for i in range(0, len(piece), step)]
+                break
+        return pieces

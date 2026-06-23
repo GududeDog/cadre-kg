@@ -7,6 +7,31 @@ from config import NEO4J_URI, NEO4J_AUTH
 from embedding.embedder import Embedder
 
 
+# ─── MERGE key mapping by entity type ───
+MERGE_KEY_MAP = {
+    "Cadre": lambda props, ent: props.get("cadre_id") or ent.get("name", ""),
+    "Position": lambda props, ent: props.get("position_id") or ent.get("name", ""),
+    "Resume": lambda props, ent: props.get("resume_id") or ent.get("name", ""),
+    "Education": lambda props, ent: props.get("edu_id") or ent.get("name", ""),
+    "Relation": lambda props, ent: props.get("relation_id") or ent.get("name", ""),
+    "RewardPunish": lambda props, ent: props.get("reward_punish_id") or ent.get("name", ""),
+    "Performance": lambda props, ent: props.get("performance_id") or ent.get("name", ""),
+    "Evaluation": lambda props, ent: props.get("evaluation_id") or ent.get("name", ""),
+    "Shortcoming": lambda props, ent: props.get("shortcoming_id") or ent.get("name", ""),
+    "Personality": lambda props, ent: props.get("personality_id") or ent.get("name", ""),
+    "Ability": lambda props, ent: props.get("ability_id") or ent.get("name", ""),
+    "FamiliarField": lambda props, ent: props.get("field_id") or ent.get("name", ""),
+    "Tag": lambda props, ent: props.get("tag_id") or ent.get("name", ""),
+    "WritingStyle": lambda props, ent: props.get("writing_id") or ent.get("name", ""),
+    "AnnualAssessment": lambda props, ent: props.get("assessment_id") or ent.get("name", ""),
+    "Profile": lambda props, ent: props.get("profile_id") or ent.get("name", ""),
+    "PositionStatus": lambda props, ent: props.get("position_status_id") or ent.get("name", ""),
+    "Division": lambda props, ent: props.get("division_id") or ent.get("name", ""),
+    "AbilityEvolution": lambda props, ent: props.get("evolution_id") or ent.get("name", ""),
+    "ExcellenceIndicator": lambda props, ent: props.get("indicator_id") or ent.get("name", ""),
+}
+
+
 class GraphWriter:
     def __init__(self):
         self.driver = GraphDatabase.driver(NEO4J_URI, auth=NEO4J_AUTH)
@@ -17,11 +42,17 @@ class GraphWriter:
 
     def init_schema(self):
         with self.driver.session() as session:
-            session.run("CREATE CONSTRAINT cadre_cadre_id IF NOT EXISTS FOR (n:Cadre) REQUIRE n.cadre_id IS UNIQUE")
-            session.run("CREATE CONSTRAINT org_org_id IF NOT EXISTS FOR (n:Organization) REQUIRE n.org_id IS UNIQUE")
-            session.run("CREATE INDEX idx_cadre_name IF NOT EXISTS FOR (n:Cadre) ON (n.name)")
-            session.run("CREATE INDEX idx_org_name IF NOT EXISTS FOR (n:Organization) ON (n.org_name)")
-            session.run("CREATE INDEX idx_pos_name IF NOT EXISTS FOR (n:Position) ON (n.position_name)")
+            for stmt in [
+                "CREATE CONSTRAINT cadre_cadre_id IF NOT EXISTS FOR (n:Cadre) REQUIRE n.cadre_id IS UNIQUE",
+                "CREATE INDEX idx_cadre_name IF NOT EXISTS FOR (n:Cadre) ON (n.name)",
+            ]:
+                try:
+                    session.run(stmt)
+                except Exception as e:
+                    if "already exists" in str(e) or "EquivalentSchemaRuleAlreadyExists" in str(e):
+                        pass  # Neo4j 4.x doesn't support IF NOT EXISTS
+                    else:
+                        print(f"[WARN] init_schema: {e}")
 
     def write_entities(self, entities: List[Dict]):
         with self.driver.session() as session:
@@ -30,18 +61,27 @@ class GraphWriter:
 
     def _write_entity(self, session, ent: Dict):
         etype = ent.get("type", "Entity")
-        props = ent.get("properties", {})
-        # Use name or cadre_id as merge key
-        merge_key = "name"
-        merge_val = props.get("name") or props.get("cadre_id") or props.get("org_name") or ent.get("name", "")
+        props = ent.get("properties", {}) or {}
+
+        # Pick MERGE key by entity type
+        key_fn = MERGE_KEY_MAP.get(etype)
+        if key_fn:
+            merge_val = key_fn(props, ent)
+        else:
+            merge_val = ent.get("name") or props.get("name", "")
+
         if not merge_val:
             return
         props["name"] = merge_val
 
-        # Optional: generate embedding for Cadre / Document
-        if etype in ("Cadre", "Document", "DocumentChunk"):
+        # Optional: generate embedding for Cadre
+        if etype == "Cadre":
             embed_text = f"{merge_val} {' '.join(str(v) for v in props.values() if v)}"
-            embedding = self.embedder.embed_one(embed_text)
+            try:
+                embedding = self.embedder.embed_one(embed_text)
+            except Exception as e:
+                print(f"[WARN] embed {etype}:{merge_val} -> {e}")
+                embedding = None
         else:
             embedding = None
 
@@ -72,7 +112,7 @@ class GraphWriter:
         try:
             session.run(cypher, **params)
         except Exception as e:
-            print(f"[WARN] write {etype}:{merge_val} → {e}")
+            print(f"[WARN] write {etype}:{merge_val} -> {e}")
 
     def write_relations(self, relations: List[Dict]):
         with self.driver.session() as session:
@@ -120,10 +160,10 @@ class GraphWriter:
         try:
             session.run(cypher, **params)
         except Exception as e:
-            print(f"[WARN] write rel {rtype} {src_key}→{tgt_key}: {e}")
+            print(f"[WARN] write rel {rtype} {src_key}->{tgt_key}: {e}")
 
     def write_tags(self, tags: List[Dict]):
-        """Write tag as AbilityTag node + HAS_ABILITY relation."""
+        """Write tag as Tag node + HAS_TAG relation."""
         entities = []
         relations = []
         for tag in tags:
@@ -132,18 +172,24 @@ class GraphWriter:
             target = tag.get("target", "")
             if not tname or not target:
                 continue
+            tag_id = f"tag_{target}_{tname}"
             entities.append({
-                "type": "AbilityTag",
-                "name": tname,
-                "properties": {"tag_name": tname, "tag_category": tcategory, "tag_weight": 0.5},
+                "type": "Tag",
+                "name": tag_id,
+                "properties": {
+                    "tag_id": tag_id,
+                    "cadre_id": target,
+                    "style_tag": tname if tcategory == "风格标签" else None,
+                    "issue_tag": tname if tcategory == "负面" else None,
+                },
             })
             relations.append({
                 "source_type": "Cadre",
                 "source_name": target,
-                "relation": "HAS_ABILITY",
-                "target_type": "AbilityTag",
-                "target_name": tname,
-                "properties": {"proficiency": "了解", "source": "AI推断", "confidence": 0.7},
+                "relation": "HAS_TAG",
+                "target_type": "Tag",
+                "target_name": tag_id,
+                "properties": {},
             })
         self.write_entities(entities)
         self.write_relations(relations)

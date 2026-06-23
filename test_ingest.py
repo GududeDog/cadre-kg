@@ -53,6 +53,12 @@ class SingleFileTester:
         print(f"测试文件: {filename}")
         print(f"{'='*60}")
 
+        # 0. 从文件名提取 cadre_id (e.g. "011.doc" → "011")
+        import re as _re
+        m = _re.match(r"^(\d{3,4})", Path(filename).stem)
+        file_cadre_id = m.group(1) if m else None
+        print(f"  [推断] cadre_id = {file_cadre_id} (from filename)")
+
         # 1. 文档接入
         print(f"\n[1/6] 文档接入 ...")
         doc = self.parser.parse(fp)
@@ -92,7 +98,8 @@ class SingleFileTester:
                 try:
                     doc_type = getattr(chunk, "doc_type", "")
                     metadata = getattr(chunk, "metadata", {}) or {}
-                    cadre_id = metadata.get("cadre_id")
+                    # Fallback: use cadre_id from filename if metadata doesn't have it
+                    cadre_id = metadata.get("cadre_id") or file_cadre_id
                     r = self.extractor.extract(
                         chunk.text, doc_type=doc_type, cadre_id=cadre_id)
                     self._print_detail(r, chunk.text)

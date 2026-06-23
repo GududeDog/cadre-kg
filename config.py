@@ -6,7 +6,8 @@ NEO4J_URI = "neo4j://localhost"
 NEO4J_AUTH = ("neo4j", "12345678")
 
 # ─── Source Documents ───
-SOURCE_DIR = Path(r"E:\ZKSJ_project\CYRS_test\demo\材料 - 副本")
+# SOURCE_DIR = Path(r"E:\ZKSJ_project\CYRS_test\demo\材料 - 副本")
+SOURCE_DIR = Path(r"E:\大模型工作内容\朝阳人事\朝阳人事数据\训练数据\街乡班子任免表\乡\1-南磨房乡-001等14人-任免表（2026-05-14）")
 
 # ─── Embedding ───
 EMBEDDING_MODEL = r"E:\ZKSJ_project\CYRS_test\demo\bge-base-zh-v1.5"
@@ -15,34 +16,37 @@ EMBEDDING_DEVICE = "cuda"
 EMBEDDING_CACHE_DIR = r"E:\ZKSJ_project\CYRS_test\demo\bge-base-zh-v1.5"
 
 # ─── Chunking ───
-CHUNK_SIZE = 512
-CHUNK_OVERLAP = 64
+CHUNK_SIZE = 1500
+CHUNK_OVERLAP = 100
+CHUNK_HARD_MAX = 1800  # Force-split any single chunk longer than this at sentence boundaries
 
-# ─── LLM (Qwen via proxy/openai compatible) ───
-LLM_API_KEY = "43F2FBB5055A7CDDCD082D740B0475E0"
-LLM_BASE_URL = "http://41.0.0.114:8088/lm/v2"
-LLM_MODEL = "qwen"
+# ─── LLM (DeepSeek) ───
+LLM_API_KEY = "sk-275f42912df249b29595b6ff4cc8ed89"
+LLM_BASE_URL = "https://api.deepseek.com"
+LLM_MODEL = "deepseek-v4-flash"
+
+# ─── LLM (DeepSeek) ───
+# LLM_API_KEY = "43F2FBB5055A7CDDCD082D740B0475E0"
+# LLM_BASE_URL = "http://41.0.0.114:8088/lm/v2/chat/completions"
+# LLM_MODEL = "ds-v4-flash"
 
 # ─── Extraction ───
 ENTITY_TYPES = [
-    "Cadre", "Organization", "Position", "Appointment", "Assessment",
-    "DemocraticAssessment", "Event", "Training", "Award", "Discipline",
-    "Audit", "Document", "DocumentChunk", "LeadershipTeam", "TeamConfig",
-    "Person", "Education", "AbilityTag", "CultivationPath",
+    "Cadre", "Position", "Resume", "Education", "Relation",
+    "RewardPunish", "Performance", "Evaluation", "Shortcoming",
+    "Personality", "Ability", "FamiliarField", "Tag", "WritingStyle",
+    "AnnualAssessment", "Profile", "PositionStatus", "Division",
+    "AbilityEvolution", "ExcellenceIndicator",
 ]
 
 RELATION_TYPES = [
-    "HOLDS", "BELONGS_TO", "CURRENTLY_IN", "HAS_APPOINTMENT",
-    "FOR_POSITION", "IN_ORGANIZATION",
-    "HAS_ASSESSMENT", "HAS_DEMOCRATIC_ASSESSMENT",
-    "PARTICIPATED_IN", "DEVELOPS_ABILITY",
-    "ATTENDED", "RECEIVED", "RECEIVED_DISCIPLINE",
-    "AUDITED", "HAS_DOCUMENT", "HAS_CHUNK",
-    "STUDIED_AT", "HAS_ABILITY", "REQUIRES_ABILITY",
-    "HAS_RELATION", "COLLEAGUE_WITH", "SCHOOLMATE_WITH",
-    "FROM_SAME_PLACE", "HAS_MEMBER", "LEADS",
-    "BASED_ON", "FOR_CADRE", "INCLUDES_TRAINING", "TARGETS_POSITION",
-    "SUBORDINATE_TO", "MENTIONS", "FAMILIAR_WITH",
+    "HAS_RESUME", "HAS_EDUCATION", "HAS_RELATIVE", "HAS_REWARD",
+    "HAS_ACHIEVEMENT", "HAS_EVALUATION", "HAS_SHORTCOMING",
+    "HAS_PERSONALITY", "HAS_ABILITY", "HAS_FAMILIAR_FIELD",
+    "HAS_TAG", "HAS_WRITING_STYLE", "HAS_ANNUAL_ASSESSMENT",
+    "HAS_PROFILE", "HAS_POSITION_STATUS", "HAS_DIVISION",
+    "HAS_ABILITY_EVOLUTION", "HAS_EXCELLENCE",
+    "REFERENCES_POSITION", "RESUME_REFERENCES_POSITION",
 ]
 
 TAG_CATEGORIES = ["专业技能", "管理能力", "通用能力", "工作作风", "负面"]

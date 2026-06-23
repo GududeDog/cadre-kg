@@ -84,7 +84,7 @@ class TagExtractor:
 请从控词表中选择最匹配的标签，输出JSON格式。"""
 
         try:
-            resp = self.client.chat.completions.create(
+            kwargs = dict(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT_TAG.format(
@@ -92,8 +92,18 @@ class TagExtractor:
                     {"role": "user", "content": user_msg},
                 ],
                 temperature=0.1,
+                max_tokens=500,
             )
-            raw = resp.choices[0].message.content
+            if "deepseek" in self.model.lower():
+                try:
+                    resp = self.client.chat.completions.create(
+                        **kwargs, response_format={"type": "json_object"}
+                    )
+                except Exception:
+                    resp = self.client.chat.completions.create(**kwargs)
+            else:
+                resp = self.client.chat.completions.create(**kwargs)
+            raw = resp.choices[0].message.content or ""
             return self._parse_tags(raw, target)
         except Exception as e:
             print(f"    LLM标签精调失败: {e}")
@@ -101,16 +111,24 @@ class TagExtractor:
 
     @staticmethod
     def _parse_tags(raw: str, default_target: str) -> List[Dict]:
-        raw = raw.strip()
+        raw = (raw or "").strip()
+        if not raw:
+            return []
         if raw.startswith("```"):
             raw = re.sub(r"^```(?:json)?\s*", "", raw)
             raw = re.sub(r"\s*```$", "", raw)
         try:
             data = json.loads(raw)
-            tags = data.get("tags", [])
-            for t in tags:
-                if "target" not in t or not t["target"]:
-                    t["target"] = default_target
-            return tags[:10]
         except json.JSONDecodeError:
             return []
+        if not isinstance(data, dict):
+            return []
+        tags = data.get("tags", [])
+        if not isinstance(tags, list):
+            return []
+        for t in tags:
+            if not isinstance(t, dict):
+                continue
+            if "target" not in t or not t["target"]:
+                t["target"] = default_target
+        return [t for t in tags if isinstance(t, dict)][:10]

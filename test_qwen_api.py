@@ -25,7 +25,7 @@ def test_qwen(prompt: str = None, verbose: bool = False):
     print(f"Prompt: {prompt}")
     print("-" * 50)
 
-    client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+    client = OpenAI(api_key=API_KEY, base_url=BASE_URL, timeout=120.0)
 
     # 1. 连接测试
     print("[1/3] 连接测试 ...", end=" ", flush=True)

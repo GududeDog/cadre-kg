@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>干部材料上传</title>
+<style>
+:root {
+  --bg: #FAFAF8;
+  --bg2: #F5F5F3;
+  --white: #ffffff;
+  --ink: #1A1A1A;
+  --ink2: #666666;
+  --ink3: #999999;
+  --red: #E8636A;
+  --red-bg: #FFEBEE;
+  --red-border: #FFCDD2;
+  --amber: #F57F17;
+  --amber-bg: #FFF8E1;
+  --amber-border: #FFE082;
+  --green: #2E7D32;
+  --green-bg: #E8F5E9;
+  --green-border: #C8E6C9;
+  --blue: #1565C0;
+  --blue-bg: #E3F2FD;
+  --blue-border: #BBDEFB;
+  --border: #DDDAD2;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.6;
+  min-width: 960px;
+  padding: 24px;
+}
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 12px 20px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.topbar h1 { font-size: 18px; font-weight: 600; }
+.topbar a {
+  color: var(--red); text-decoration: none; font-size: 13px;
+  padding: 6px 14px; border: 1px solid var(--red-border);
+  border-radius: 6px; background: var(--red-bg);
+}
+.topbar a:hover { background: var(--red); color: #fff; }
+
+.container { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+
+.panel {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+}
+.panel-title {
+  font-size: 14px; font-weight: 600; margin-bottom: 14px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--border);
+}
+
+.cat-list { display: flex; flex-direction: column; gap: 8px; }
+.cat-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.cat-item:hover { border-color: var(--red); background: var(--red-bg); }
+.cat-item input { margin-top: 3px; cursor: pointer; }
+.cat-item.selected { border-color: var(--red); background: var(--red-bg); }
+.cat-name { font-size: 13px; font-weight: 600; }
+.cat-meta { font-size: 11px; color: var(--ink2); margin-top: 2px; }
+
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--ink3);
+  cursor: pointer;
+  transition: all .15s;
+  margin-bottom: 16px;
+}
+.upload-zone:hover, .upload-zone.dragging {
+  border-color: var(--red);
+  background: var(--red-bg);
+  color: var(--red);
+}
+.upload-zone input[type=file] { display: none; }
+.upload-icon { font-size: 36px; margin-bottom: 8px; }
+.upload-hint { font-size: 12px; margin-top: 6px; }
+
+.form-row { display: flex; gap: 10px; margin-bottom: 16px; }
+.form-row input, .form-row select {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  background: var(--white);
+}
+.form-row input:focus, .form-row select:focus { border-color: var(--red); }
+
+.btn-row { display: flex; gap: 10px; margin-bottom: 16px; }
+.btn {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-primary { background: var(--red); color: #fff; }
+.btn-primary:hover { background: #d45660; }
+.btn-primary:disabled { background: var(--ink3); cursor: not-allowed; }
+.btn-ghost {
+  background: var(--white); color: var(--ink2);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { border-color: var(--ink2); }
+
+.file-list { margin-top: 16px; }
+.file-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.file-row .name { flex: 1; }
+.file-row .status { padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+.status-pending { background: var(--bg2); color: var(--ink2); }
+.status-done    { background: var(--green-bg); color: var(--green); }
+.status-error   { background: var(--red-bg); color: var(--red); }
+.status-skip    { background: var(--amber-bg); color: var(--amber); }
+
+.result {
+  margin-top: 20px;
+  padding: 14px;
+  background: var(--bg2);
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.result.ok    { background: var(--green-bg); }
+.result.error { background: var(--red-bg); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>干部材料上传</h1>
+  <a href="/">返回干部画像</a>
+</div>
+
+<div class="container">
+  <div class="panel">
+    <div class="panel-title">选择材料类目（单选）</div>
+    <div class="cat-list" id="catList">
+      <div style="color:var(--ink3);font-size:12px;padding:8px 0">加载中…</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">上传文件</div>
+
+    <div class="form-row">
+      <input type="text" id="cadreId" placeholder="干部编号（可选，如 001）" />
+    </div>
+
+    <label class="upload-zone" id="dropZone">
+      <div class="upload-icon">📤</div>
+      <div>点击或拖拽文件到此处上传</div>
+      <div class="upload-hint">支持 .doc / .docx / .xls / .xlsx / .txt</div>
+      <input type="file" id="fileInput" multiple
+             accept=".doc,.docx,.xls,.xlsx,.txt" />
+    </label>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="uploadBtn" disabled>上传并处理</button>
+      <button class="btn btn-ghost" id="clearBtn">清空</button>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+
+    <div class="result" id="result" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+const catList    = document.getElementById('catList');
+const dropZone   = document.getElementById('dropZone');
+let   fileInput  = document.getElementById('fileInput');
+const fileList   = document.getElementById('fileList');
+const cadreId    = document.getElementById('cadreId');
+const uploadBtn  = document.getElementById('uploadBtn');
+const clearBtn   = document.getElementById('clearBtn');
+const resultBox  = document.getElementById('result');
+
+let selectedCat  = null;
+let stagedFiles  = [];
+
+// ─── 加载类目列表 ───
+fetch('/api/categories')
+  .then(r => r.json())
+  .then(data => {
+    catList.innerHTML = '';
+    data.categories.forEach(c => {
+      const item = document.createElement('label');
+      item.className = 'cat-item';
+      item.innerHTML = `
+        <input type="radio" name="cat" value="${c.code}" />
+        <div>
+          <div class="cat-name">${c.name}</div>
+          <div class="cat-meta">doc_type: ${c.doc_type} · 主实体: ${c.primary_entity} · LLM: ${c.use_llm ? '是' : '否'}</div>
+        </div>
+      `;
+      item.addEventListener('click', e => {
+        if (e.target.tagName !== 'INPUT') {
+          const r = item.querySelector('input');
+          r.checked = true;
+        }
+        catList.querySelectorAll('.cat-item').forEach(i => i.classList.remove('selected'));
+        item.classList.add('selected');
+        selectedCat = item.querySelector('input').value;
+        updateUploadBtn();
+      });
+      catList.appendChild(item);
+    });
+  })
+  .catch(err => {
+    catList.innerHTML = `<div style="color:var(--red)">加载类目失败: ${err}</div>`;
+  });
+
+// ─── 拖拽 / 选择文件 ───
+['dragenter', 'dragover'].forEach(ev => {
+  dropZone.addEventListener(ev, e => {
+    e.preventDefault();
+    dropZone.classList.add('dragging');
+  });
+});
+['dragleave', 'drop'].forEach(ev => {
+  dropZone.addEventListener(ev, e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragging');
+  });
+});
+dropZone.addEventListener('drop', e => {
+  stagedFiles.push(...Array.from(e.dataTransfer.files));
+  renderFileList();
+});
+
+function handleFileSelect(e) {
+  const files = Array.from(e.target.files);
+  console.log('[upload] files selected:', files.length, files.map(f => f.name));
+  stagedFiles.push(...files);
+  e.target.value = '';
+  renderFileList();
+}
+fileInput.addEventListener('change', handleFileSelect);
+
+function resetFileInput() {
+  const parent = fileInput.parentNode;
+  const newInput = document.createElement('input');
+  newInput.type = 'file';
+  newInput.id = 'fileInput';
+  newInput.multiple = true;
+  newInput.accept = '.doc,.docx,.xls,.xlsx,.txt';
+  newInput.style.display = 'none';
+  parent.removeChild(fileInput);
+  parent.appendChild(newInput);
+  fileInput = newInput;
+  fileInput.addEventListener('change', handleFileSelect);
+  console.log('[upload] file input reset');
+}
+
+function renderFileList() {
+  fileList.innerHTML = '';
+  stagedFiles.forEach((f, idx) => {
+    const row = document.createElement('div');
+    row.className = 'file-row';
+    row.innerHTML = `
+      <span class="name">${idx + 1}. ${f.name} <span style="color:var(--ink3)">(${formatSize(f.size)})</span></span>
+      <span class="status status-pending">待上传</span>
+    `;
+    fileList.appendChild(row);
+  });
+  updateUploadBtn();
+}
+
+function formatSize(b) {
+  if (b < 1024) return b + 'B';
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + 'KB';
+  return (b / 1024 / 1024).toFixed(1) + 'MB';
+}
+
+function updateUploadBtn() {
+  uploadBtn.disabled = !(selectedCat && stagedFiles.length > 0);
+}
+
+clearBtn.addEventListener('click', () => {
+  stagedFiles = [];
+  resetFileInput();
+  renderFileList();
+  resultBox.style.display = 'none';
+});
+
+// ─── 上传 ───
+uploadBtn.addEventListener('click', async () => {
+  if (!selectedCat || stagedFiles.length === 0) return;
+
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = '处理中…';
+
+  const form = new FormData();
+  form.append('category_code', selectedCat);
+  form.append('cadre_id_hint', cadreId.value.trim());
+  stagedFiles.forEach(f => form.append('files', f));
+
+  const rows = fileList.querySelectorAll('.file-row .status');
+  rows.forEach(r => { r.className = 'status status-pending'; r.textContent = '处理中…'; });
+
+  try {
+    const resp = await fetch('/api/upload', { method: 'POST', body: form });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error(data.detail || JSON.stringify(data));
+    }
+
+    // 更新每行状态
+    data.results.forEach((r, idx) => {
+      const statusEl = rows[idx];
+      if (!statusEl) return;
+      if (r.error) {
+        statusEl.className = 'status status-error';
+        statusEl.textContent = '失败';
+      } else if (r.skipped) {
+        statusEl.className = 'status status-skip';
+        statusEl.textContent = '跳过';
+      } else {
+        statusEl.className = 'status status-done';
+        statusEl.textContent = `+${r.entities}实体`;
+      }
+    });
+
+    // 展示结果
+    resultBox.className = 'result ok';
+    resultBox.style.display = 'block';
+    resultBox.textContent = JSON.stringify(data, null, 2);
+
+    stagedFiles = [];
+    fileList.innerHTML = '';
+    resetFileInput();
+    console.log('[upload] success, cleared stagedFiles');
+  } catch (err) {
+    resultBox.className = 'result error';
+    resultBox.style.display = 'block';
+    resultBox.textContent = '上传失败: ' + err.message;
+  } finally {
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = '上传并处理';
+  }
+});
+</script>
+</body>
+</html>
