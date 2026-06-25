@@ -21,7 +21,7 @@ CHUNK_OVERLAP = 100
 CHUNK_HARD_MAX = 1800  # Force-split any single chunk longer than this at sentence boundaries
 
 # ─── LLM (DeepSeek) ───
-LLM_API_KEY = "sk-275f42912df249b29595b6ff4cc8ed89"
+LLM_API_KEY = "sk-09354cec9c7c4f9098021ec966beaf4d"
 LLM_BASE_URL = "https://api.deepseek.com"
 LLM_MODEL = "deepseek-v4-flash"
 

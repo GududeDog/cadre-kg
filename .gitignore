@@ -22,3 +22,16 @@ Thumbs.db
 # Environment
 .env
 *.env.local
+
+# Model files
+bge-base-zh-v1.5/
+
+# Vector DB
+chroma_db/
+chroma_store/
+
+# Photos
+photos/*.jpg
+photos/*.jpeg
+photos/*.png
+!photos/.gitkeep

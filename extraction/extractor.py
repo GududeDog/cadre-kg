@@ -12,6 +12,7 @@ from .prompts import BASIC_INFO_PROMPT, build_basic_info_prompt
 from .prompts import ANNUAL_REPORT_PROMPT, build_annual_report_prompt
 from .prompts import ORG_EVALUATION_PROMPT, build_org_evaluation_prompt
 from .prompts import RESEARCH_PROMPT, build_research_prompt
+from .prompts import POSITION_RANK_PROMPT, build_position_rank_prompt
 from .tag_extractor import TagExtractor
 
 
@@ -401,6 +402,63 @@ class Extractor:
 
         print(f"  [FAIL] research after 3 attempts. last_error={last_error}")
         return ExtractionResult()
+
+    def extract_position_rank(self, position_text: str,
+                              position_rules: list = None,
+                              rank_rules: list = None) -> dict:
+        """从"现任职务"文本推断职务级别和职级级别。
+        返回 {"position_level": "...", "rank_level": "..."}
+        """
+        kwargs = dict(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": POSITION_RANK_PROMPT},
+                {"role": "user", "content": build_position_rank_prompt(
+                    position_text,
+                    position_rules or [],
+                    rank_rules or [],
+                )},
+            ],
+            temperature=0.0,
+            max_tokens=200,
+        )
+        if "deepseek" in self.model.lower():
+            kwargs["response_format"] = {"type": "json_object"}
+
+        raw = ""
+        for attempt in range(3):
+            try:
+                try:
+                    resp = self.client.chat.completions.create(
+                        **kwargs, response_format={"type": "json_object"})
+                except Exception:
+                    resp = self.client.chat.completions.create(**kwargs)
+                raw = resp.choices[0].message.content or ""
+                if raw.strip():
+                    break
+                import time as _t
+                _t.sleep(2 + attempt * 2)
+            except Exception as e:
+                print(f"  [retry {attempt+1}/3] position_rank failed: {e}")
+                import time as _t
+                _t.sleep(2 + attempt * 2)
+
+        if not raw.strip():
+            return {"position_level": "", "rank_level": ""}
+
+        try:
+            return self._parse_simple(raw)
+        except Exception as e:
+            print(f"  [FAIL] position_rank JSON parse: {e}")
+            return {"position_level": "", "rank_level": ""}
+
+    @staticmethod
+    def _parse_simple(raw: str) -> dict:
+        raw = raw.strip()
+        if raw.startswith("```"):
+            raw = re.sub(r"^```(?:json)?\s*", "", raw)
+            raw = re.sub(r"\s*```$", "", raw)
+        return json.loads(raw)
 
     @staticmethod
     def _parse(raw: str) -> ExtractionResult:

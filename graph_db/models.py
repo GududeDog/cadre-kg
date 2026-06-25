@@ -4,6 +4,7 @@ NODE_SCHEMA = {
             "cadre_id", "name", "gender", "birth_date", "age", "ethnicity",
             "native_place", "birth_place", "party_join_date", "work_start_date",
             "retirement_date", "health_status", "tech_title", "specialty",
+            "current_position_level", "current_rank",
         ]
     },
     "Position": {
@@ -13,6 +14,7 @@ NODE_SCHEMA = {
         "properties": [
             "resume_id", "period", "unit", "department", "position",
             "region", "dept", "rank", "cadre_id",
+            "position_level", "rank_level",
         ]
     },
     "Education": {
@@ -104,8 +106,8 @@ NODE_SCHEMA = {
     },
     "Division": {
         "properties": [
-            "division_id", "division_content", "source_doc",
-            "source_fragment", "cadre_id",
+            "division_id", "division_content", "department",
+            "source_doc", "source_fragment", "cadre_id",
         ]
     },
     "AbilityEvolution": {

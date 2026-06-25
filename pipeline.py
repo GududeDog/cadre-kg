@@ -143,25 +143,139 @@ class Pipeline:
 
         # 5. Extract
         if category_code == "basic_info" and self.extractor is not None:
+            # ── 分工备案表 .xlsx → 直接解析（不调 LLM）──
+            if path.suffix.lower() == ".xlsx":
+                cid = cadre_id_hint or ""
+                print(f"  [分工表] 解析 Excel → 分工备案表 ...")
+                div_entities, div_relations = [], []
+                try:
+                    from ingestion.division_parser import parse_division_table
+                    div_entities, div_relations = parse_division_table(
+                        file_path, source_doc=path.name)
+                except Exception as e:
+                    print(f"  [分工表] 解析失败: {e}")
+
+                if div_entities:
+                    cadre_ids = set(
+                        e.get("properties", {}).get("cadre_id", "")
+                        for e in div_entities if e.get("type") == "Cadre"
+                    )
+                    print(f"  分工表: {len(cadre_ids)} 名干部, "
+                          f"{len([e for e in div_entities if e.get('type')=='Division'])} 条分工")
+                    # 直接写入（不走 Alignment，表格数据不需要去重）
+                    write_ok = False
+                    write_error = None
+                    if not self.dry_run and self.writer is not None:
+                        try:
+                            self.writer.init_schema()
+                            self.writer.write_entities(div_entities)
+                            self.writer.write_relations(div_relations)
+                            write_ok = True
+                            print(f"  [写入] → Neo4j 成功")
+                        except Exception as e:
+                            write_error = f"{type(e).__name__}: {e}"
+                            print(f"[错误] 写入失败: {write_error}")
+                    status = "成功" if write_ok else ("演示模式" if self.dry_run else "失败")
+                    print(f"  ── 处理完成: {path.name} → {len(div_entities)} 实体, "
+                          f"写入={status}\n")
+                    return {
+                        "filename": path.name,
+                        "category_code": category_code,
+                        "category_name": profile["name"],
+                        "doc_type": doc_type,
+                        "cadre_id": cid,
+                        "use_llm": False,
+                        "chunks": 0,
+                        "raw_entities": len(div_entities),
+                        "raw_relations": len(div_relations),
+                        "entities": len(div_entities),
+                        "relations": len(div_relations),
+                        "tags": 0,
+                        "write_ok": write_ok,
+                        "write_error": write_error,
+                        "skipped": False,
+                    }
+                else:
+                    print(f"  分工表: 未提取到数据，回退 LLM 流程")
+
             # ── 基础信息：2次 LLM 调用 ──
             cid = cadre_id_hint or "unknown"
-            print(f"  [1/3] 文档解析 → 纯文本 ({len(doc.raw_text)} 字符)")
 
-            print(f"  [2/3] LLM #1 → 抽取表单字段 ...")
+            # 照片提取
+            from ingestion.photo_extractor import extract_photo
+            photo_path, photo_err = extract_photo(file_path, cid)
+            if photo_err:
+                print(f"  [照片] 跳过: {photo_err}")
+            else:
+                print(f"  [照片] 已保存 → {photo_path}")
+
+            print(f"  [1/5] 文档解析 → 纯文本 ({len(doc.raw_text)} 字符)")
+
+            print(f"  [2/5] LLM #1 → 抽取表单字段 ...")
             result = self.extractor.extract_basic_info(doc.raw_text, cid)
             etypes = set(e.get("type", "?") for e in result.entities)
             print(f"        实体: {len(result.entities)} 个 ({', '.join(sorted(etypes))})")
 
-            # 读 YAML 拿简历抽取规则，全文发给 LLM #2
+            # ── 加载 rank_position 规则（Cadre + Resume 共用）──
+            import yaml as _yaml_pr
+            pr_rules_path = Path(__file__).parent / "extraction_rules" / "rank_position.yaml"
+            with open(pr_rules_path, encoding="utf-8") as _f:
+                pr_rules = _yaml_pr.safe_load(_f)
+
+            # ── 职务职级推断 (Cadre) ──
+            current_pos = ""
+            for e in result.entities:
+                if e.get("type") == "PositionStatus":
+                    current_pos = (e.get("properties") or {}).get("current_position", "")
+                    break
+            if current_pos:
+                print(f"  [3/5] LLM #2 → 职务职级推断 ({current_pos[:30]}...) ...")
+                pr_result = self.extractor.extract_position_rank(
+                    current_pos,
+                    position_rules=pr_rules.get("position_rules", []),
+                    rank_rules=pr_rules.get("rank_rules", []),
+                )
+                pos_level = pr_result.get("position_level", "")
+                rank_level = pr_result.get("rank_level", "")
+                print(f"        → 职务: {pos_level or '(未匹配)'}, 职级: {rank_level or '(未匹配)'}")
+                for e in result.entities:
+                    if e.get("type") == "Cadre":
+                        props = e.setdefault("properties", {})
+                        props["current_position_level"] = pos_level
+                        props["current_rank"] = rank_level
+                        break
+            else:
+                print(f"  [3/5] 职务职级推断 → 跳过（未提取到现任职务）")
+
+            # 读 YAML 拿简历抽取规则，全文发给 LLM #3
             import yaml as _yaml
             rules_path = Path(__file__).parent / "extraction_rules" / "basic_info.yaml"
             with open(rules_path, encoding="utf-8") as _f:
                 resume_rules = _yaml.safe_load(_f).get("resume_rules", [])
 
-            print(f"  [3/3] LLM #2 → 抽取简历条目 ...")
+            print(f"  [4/5] LLM #3 → 抽取简历条目 ...")
             llm_result = self.extractor.extract_resume(
                 doc.raw_text, cid, resume_rules)
             print(f"        简历: {len(llm_result.entities)} 条")
+
+            # ── 简历职务职级后处理 ──
+            resume_pos_count = 0
+            for e in llm_result.entities:
+                if e.get("type") == "Resume":
+                    pos_text = (e.get("properties") or {}).get("position", "")
+                    if pos_text:
+                        pr = self.extractor.extract_position_rank(
+                            pos_text,
+                            position_rules=pr_rules.get("position_rules", []),
+                            rank_rules=pr_rules.get("rank_rules", []),
+                        )
+                        props = e.setdefault("properties", {})
+                        props["position_level"] = pr.get("position_level", "")
+                        props["rank_level"] = pr.get("rank_level", "")
+                        resume_pos_count += 1
+            if resume_pos_count:
+                print(f"  [5/5] 简历职务职级推断: {resume_pos_count} 条")
+
             result.merge(llm_result)
         elif category_code == "annual_assessment" and self.extractor is not None:
             # ── 年度考核：1次 LLM 抽取所有维度 ──
