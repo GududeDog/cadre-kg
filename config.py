@@ -1,9 +1,9 @@
 import os
 from pathlib import Path
 
-# ─── Neo4j ───
-NEO4J_URI = "neo4j://localhost"
-NEO4J_AUTH = ("neo4j", "12345678")
+# ─── TuGraph (Bolt 兼容) ───
+NEO4J_URI = "bolt://192.168.3.171:5687"
+NEO4J_AUTH = ("admin", "qwe_321@UV")
 
 # ─── Source Documents ───
 # SOURCE_DIR = Path(r"E:\ZKSJ_project\CYRS_test\demo\材料 - 副本")

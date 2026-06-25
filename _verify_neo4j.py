@@ -2,7 +2,7 @@ from neo4j import GraphDatabase
 import config
 
 d = GraphDatabase.driver(config.NEO4J_URI, auth=config.NEO4J_AUTH)
-with d.session() as s:
+with d.session(database="default") as s:
     print("=== Cadre 011 final state ===")
     for r in s.run('MATCH (c:Cadre {cadre_id:$x}) RETURN c', x='011'):
         d1 = dict(r['c'])

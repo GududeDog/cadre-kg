@@ -13,8 +13,8 @@ import os
 
 from neo4j import GraphDatabase
 
-NEO4J_URI = "neo4j://localhost"
-NEO4J_AUTH = ("neo4j", "12345678")
+NEO4J_URI = "bolt://192.168.3.171:5687"
+NEO4J_AUTH = ("admin", "qwe_321@UV")
 
 app = FastAPI(title="干部画像系统 API", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -31,13 +31,13 @@ def get_driver():
 
 
 def fetch_one(driver, query, **params):
-    with driver.session() as s:
+    with driver.session(database="default") as s:
         rec = s.run(query, **params).single()
         return dict(rec) if rec else None
 
 
 def fetch_all(driver, query, **params):
-    with driver.session() as s:
+    with driver.session(database="default") as s:
         return [dict(r) for r in s.run(query, **params)]
 
 

@@ -1,10 +1,10 @@
 import json
-from typing import Any, Dict, List, Optional
+from collections import defaultdict
+from typing import Any, Dict, List
 
 from neo4j import GraphDatabase
 
 from config import NEO4J_URI, NEO4J_AUTH
-from embedding.embedder import Embedder
 
 
 # ─── MERGE key mapping by entity type ───
@@ -35,135 +35,174 @@ MERGE_KEY_MAP = {
 class GraphWriter:
     def __init__(self):
         self.driver = GraphDatabase.driver(NEO4J_URI, auth=NEO4J_AUTH)
-        self.embedder = Embedder()
 
     def close(self):
         self.driver.close()
 
+    # ───────────────────── Schema Init ─────────────────────
+
     def init_schema(self):
-        with self.driver.session() as session:
-            for stmt in [
-                "CREATE CONSTRAINT cadre_cadre_id IF NOT EXISTS FOR (n:Cadre) REQUIRE n.cadre_id IS UNIQUE",
-                "CREATE INDEX idx_cadre_name IF NOT EXISTS FOR (n:Cadre) ON (n.name)",
-            ]:
+        """Create all vertex labels and edge labels in TuGraph.
+        Uses ``db.createVertexLabelByJson`` / ``db.createEdgeLabelByJson``
+        so all fields are defined in ONE call each.
+        """
+        from graph_db.models import NODE_SCHEMA, REL_SCHEMA
+
+        with self.driver.session(database="default") as s:
+            # ── Vertex labels ──
+            for label, schema in NODE_SCHEMA.items():
+                props = schema["properties"]
+                primary = props[0]
+                specs = []
+                for p in props:
+                    specs.append({
+                        "name": p,
+                        "type": "STRING",
+                        "optional": (p != primary),
+                    })
+                meta = json.dumps({
+                    "label": label,
+                    "type": "VERTEX",
+                    "primary": primary,
+                    "properties": specs,
+                }, ensure_ascii=False)
+                cypher = f"CALL db.createVertexLabelByJson('{meta}')"
                 try:
-                    session.run(stmt)
+                    s.run(cypher)
+                    print(f"  [schema] vertex: {label} ({len(props)} fields)")
                 except Exception as e:
-                    if "already exists" in str(e) or "EquivalentSchemaRuleAlreadyExists" in str(e):
-                        pass  # Neo4j 4.x doesn't support IF NOT EXISTS
+                    msg = str(e)
+                    if any(w in msg.lower() for w in ("already exist", "duplicate")):
+                        pass
                     else:
-                        print(f"[WARN] init_schema: {e}")
+                        print(f"  [WARN] vertex {label}: {e}")
+
+            # ── Edge labels ──
+            for rel_name, rel_info in REL_SCHEMA.items():
+                src = rel_info["source"]
+                tgt = rel_info["target"]
+                constraints = [[src, tgt]]
+                edge_props = rel_info.get("properties", [])
+                specs = [
+                    {"name": p, "type": "STRING", "optional": True}
+                    for p in edge_props
+                ]
+                meta = json.dumps({
+                    "label": rel_name,
+                    "type": "EDGE",
+                    "constraints": constraints,
+                    "properties": specs,
+                }, ensure_ascii=False)
+                cypher = f"CALL db.createEdgeLabelByJson('{meta}')"
+                try:
+                    s.run(cypher)
+                    print(f"  [schema] edge: {rel_name} ({src}->{tgt})")
+                except Exception as e:
+                    msg = str(e)
+                    if any(w in msg.lower() for w in ("already exist", "duplicate")):
+                        pass
+                    else:
+                        print(f"  [WARN] edge {rel_name}: {e}")
+
+    # ───────────────────── Entity Write (upsertVertex) ─────────────────────
 
     def write_entities(self, entities: List[Dict]):
-        with self.driver.session() as session:
+        if not entities:
+            return
+        with self.driver.session(database="default") as s:
+            grouped = defaultdict(list)
             for ent in entities:
-                self._write_entity(session, ent)
+                grouped[ent.get("type", "Entity")].append(ent)
+            for etype, group in grouped.items():
+                self._upsert_vertices(s, etype, group)
 
-    def _write_entity(self, session, ent: Dict):
-        etype = ent.get("type", "Entity")
-        props = ent.get("properties", {}) or {}
-
-        # Pick MERGE key by entity type
-        key_fn = MERGE_KEY_MAP.get(etype)
-        if key_fn:
-            merge_val = key_fn(props, ent)
-        else:
-            merge_val = ent.get("name") or props.get("name", "")
-
-        if not merge_val:
-            return
-        props["name"] = merge_val
-
-        # Optional: generate embedding for Cadre
-        if etype == "Cadre":
-            embed_text = f"{merge_val} {' '.join(str(v) for v in props.values() if v)}"
-            try:
-                embedding = self.embedder.embed_one(embed_text)
-            except Exception as e:
-                print(f"[WARN] embed {etype}:{merge_val} -> {e}")
-                embedding = None
-        else:
-            embedding = None
-
-        set_parts = []
-        params = {"merge_val": merge_val, "name": merge_val}
-        for k, v in props.items():
-            if v is None or v == "":
+    def _upsert_vertices(self, session, etype: str, group: List[Dict]):
+        rows = []
+        for ent in group:
+            props = ent.get("properties", {}) or {}
+            # Ensure primary-key field is populated from the merge key
+            key_fn = MERGE_KEY_MAP.get(etype)
+            if key_fn:
+                merge_val = key_fn(props, ent)
+                pk = merge_val  # primary field value
+            else:
+                pk = ent.get("name") or props.get("name", "")
+            if not pk:
                 continue
-            if isinstance(v, (list, tuple)):
-                v = json.dumps(v, ensure_ascii=False)
-            elif isinstance(v, bool):
-                v = str(v).lower()
-            param_key = f"p_{k}"
-            params[param_key] = v
-            set_parts.append(f"n.{k} = ${param_key}")
-        if embedding is not None:
-            params["embedding"] = embedding
-            set_parts.append("n.embedding = $embedding")
+            props["name"] = pk
 
-        if not set_parts:
+            row = {}
+            for k, v in props.items():
+                if v is None or v == "":
+                    continue
+                row[k] = v
+            if not row:
+                continue
+            rows.append(row)
+
+        if not rows:
             return
-        set_str = ", ".join(set_parts)
-        cypher = f"""
-        MERGE (n:{etype} {{name: $merge_val}})
-        ON CREATE SET {set_str}
-        ON MATCH SET {set_str}
-        """
+
+        formatted = _format_upsert_rows(rows)
+        cypher = f"CALL db.upsertVertex('{etype}', [{formatted}])"
         try:
-            session.run(cypher, **params)
+            session.run(cypher)
         except Exception as e:
-            print(f"[WARN] write {etype}:{merge_val} -> {e}")
+            print(f"[WARN] upsertVertex {etype}: {e}")
+
+    # ───────────────────── Relation Write (upsertEdge) ─────────────────────
 
     def write_relations(self, relations: List[Dict]):
-        with self.driver.session() as session:
+        if not relations:
+            return
+        with self.driver.session(database="default") as s:
+            grouped = defaultdict(list)
             for rel in relations:
-                self._write_relation(session, rel)
+                grouped[rel.get("relation", "")].append(rel)
+            for rtype, group in grouped.items():
+                if not rtype:
+                    continue
+                self._upsert_edges(s, rtype, group)
 
-    def _write_relation(self, session, rel: Dict):
-        rtype = rel.get("relation", "")
-        src_type = rel.get("source_type", "Entity")
-        src_key = rel.get("source_name", "")
-        tgt_type = rel.get("target_type", "Entity")
-        tgt_key = rel.get("target_name", "")
-        props = rel.get("properties", {}) or {}
-        if not all([rtype, src_key, tgt_key]):
+    def _upsert_edges(self, session, rtype: str, group: List[Dict]):
+        src_type = ""
+        tgt_type = ""
+        rows = []
+        for rel in group:
+            st = rel.get("source_type", "")
+            tt = rel.get("target_type", "")
+            sk = rel.get("source_name", "")
+            tk = rel.get("target_name", "")
+            if not st or not tt or not sk or not tk:
+                continue
+            src_type = st or src_type
+            tgt_type = tt or tgt_type
+            row = {"sid": sk, "tid": tk}
+            # Edge properties
+            props = rel.get("properties", {}) or {}
+            for k, v in props.items():
+                if v is not None and v != "":
+                    row[k] = v
+            rows.append(row)
+
+        if not rows:
             return
 
-        # Build SET for relation properties
-        set_parts = []
-        params = {"src_key": src_key, "tgt_key": tgt_key}
-        for k, v in props.items():
-            if v is None or v == "":
-                continue
-            if isinstance(v, (list, tuple)):
-                v = json.dumps(v, ensure_ascii=False)
-            elif isinstance(v, bool):
-                v = str(v).lower()
-            param_key = f"p_{k}"
-            params[param_key] = v
-            set_parts.append(f"r.{k} = ${param_key}")
-
-        if set_parts:
-            set_str = "SET " + ", ".join(set_parts)
-            cypher = f"""
-            MATCH (s:{src_type} {{name: $src_key}})
-            MATCH (t:{tgt_type} {{name: $tgt_key}})
-            MERGE (s)-[r:{rtype}]->(t)
-            {set_str}
-            """
-        else:
-            cypher = f"""
-            MATCH (s:{src_type} {{name: $src_key}})
-            MATCH (t:{tgt_type} {{name: $tgt_key}})
-            MERGE (s)-[r:{rtype}]->(t)
-            """
+        formatted = _format_upsert_rows(rows)
+        cypher = (
+            f'CALL db.upsertEdge("{rtype}", '
+            f'{{type:"{src_type}", key:"sid"}}, '
+            f'{{type:"{tgt_type}", key:"tid"}}, '
+            f'[{formatted}])'
+        )
         try:
-            session.run(cypher, **params)
+            session.run(cypher)
         except Exception as e:
-            print(f"[WARN] write rel {rtype} {src_key}->{tgt_key}: {e}")
+            print(f"[WARN] upsertEdge {rtype}: {e}")
+
+    # ───────────────────── Tags ─────────────────────
 
     def write_tags(self, tags: List[Dict]):
-        """Write tag as Tag node + HAS_TAG relation."""
         entities = []
         relations = []
         for tag in tags:
@@ -193,3 +232,27 @@ class GraphWriter:
             })
         self.write_entities(entities)
         self.write_relations(relations)
+
+
+# ───────────────────── Helpers ─────────────────────
+
+def _fmt_val(v):
+    """Format a value for inline Cypher literal.  TuGraph accepts
+    string values quoted, numbers/bools unquoted."""
+    if isinstance(v, str):
+        escaped = v.replace("\\", "\\\\").replace('"', '\\"')
+        return f'"{escaped}"'
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    if isinstance(v, (int, float)):
+        return str(v)
+    escaped = str(v).replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def _format_upsert_rows(rows: List[Dict]) -> str:
+    parts = []
+    for row in rows:
+        kvs = [f"{k}: {_fmt_val(v)}" for k, v in row.items()]
+        parts.append("{" + ", ".join(kvs) + "}")
+    return ", ".join(parts)

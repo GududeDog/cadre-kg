@@ -271,7 +271,7 @@ def list_files():
 def clear_neo4j():
     from neo4j import GraphDatabase
     driver = GraphDatabase.driver(config.NEO4J_URI, auth=config.NEO4J_AUTH)
-    with driver.session() as session:
+    with driver.session(database="default") as session:
         # 统计
         counts = session.run("""
             MATCH (n) 
@@ -325,7 +325,7 @@ def test_all(skip_llm=False):
 def query_neo4j():
     from neo4j import GraphDatabase
     driver = GraphDatabase.driver(config.NEO4J_URI, auth=config.NEO4J_AUTH)
-    with driver.session() as session:
+    with driver.session(database="default") as session:
         print("=== Neo4j 数据概览 ===")
         # 各类型节点数
         result = session.run("""
